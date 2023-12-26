@@ -4,8 +4,15 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+  --font-ui: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --titlebar-height: 28px;
 }
-html,
+
+html, body {
+  padding: 0;
+  margin: 0;
+}
+
 body {
-  background: transparent;
+  font-family: var(--font-ui);
 }

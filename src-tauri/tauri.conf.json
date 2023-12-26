@@ -11,13 +11,6 @@
   },
   "tauri": {
     "macOSPrivateApi": true,
-    "allowlist": {
-      "all": false,
-      "shell": {
-        "all": false,
-        "open": true
-      }
-    },
     "bundle": {
       "active": true,
       "targets": "all",
@@ -35,13 +28,23 @@
     },
     "windows": [
       {
+        "windowEffects": {
+          "effects": ["light", "blur"]
+        },
         "fullscreen": false,
         "resizable": true,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true,
         "transparent": true,
         "title": "lotion",
         "width": 800,
         "height": 600
       }
     ]
+  },
+  "plugins": {
+    "shell": {
+      "open": true
+    }
   }
 }

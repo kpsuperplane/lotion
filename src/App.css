@@ -1,7 +1,15 @@
-.logo.vite:hover {
-  filter: drop-shadow(0 0 2em #747bff);
+.lotion\:layout {
+  display: flex;
+  height: 100vh;
+  flex-direction: row;
 }
 
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafb);
+.lotion\:layout\:body {
+  flex: 1;
+  background-color: white;
+}
+
+.lotion\:layout\:sidebar {
+  flex: 0;
+  flex-basis: 256px;
 }
