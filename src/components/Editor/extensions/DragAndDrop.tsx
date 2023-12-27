@@ -3,7 +3,7 @@
 import { Extension } from "@tiptap/core";
 
 import { NodeSelection, Plugin } from "@tiptap/pm/state";
-// @ts-ignore
+// @ts-expect-error This actually exists
 import { __serializeForClipboard, EditorView } from "@tiptap/pm/view";
 
 import "./DragAndDrop.scss";

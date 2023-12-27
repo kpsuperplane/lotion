@@ -43,6 +43,15 @@
     ]
   },
   "plugins": {
+		"fs": {
+      "watch": true,
+			"scope": {
+				"allow": [
+					"$HOME",
+					"$HOME/**/*"
+				]
+			}
+		},
     "shell": {
       "open": true
     }

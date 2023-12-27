@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "lint": "eslint --ext ts,tsx src",
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
@@ -11,24 +12,39 @@
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0-alpha.13",
+    "@tauri-apps/plugin-dialog": "^2.0.0-alpha.5",
     "@tauri-apps/plugin-shell": "^2.0.0-alpha.3",
     "@tiptap/extension-document": "^2.1.13",
     "@tiptap/extension-placeholder": "^2.1.13",
     "@tiptap/pm": "^2.1.13",
     "@tiptap/react": "^2.1.13",
     "@tiptap/starter-kit": "^2.1.13",
+    "iconoir-react": "^7.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "tauri-plugin-store-api": "github:tauri-apps/tauri-plugin-store"
+    "react-promise-suspense": "^0.3.4",
+    "tauri-plugin-fs": "github:tauri-apps/tauri-plugin-fs#v2",
+    "tauri-plugin-store-api": "github:tauri-apps/tauri-plugin-store#v2"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.0.0-alpha.20",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
+    "@typescript-eslint/eslint-plugin": "^6.16.0",
     "@vitejs/plugin-react": "^4.0.3",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-config-standard-with-typescript": "^43.0.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-n": "^16.5.0",
+    "eslint-plugin-prettier": "^5.1.2",
+    "eslint-plugin-promise": "^6.1.1",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
     "internal-ip": "^7.0.0",
+    "prettier": "^3.1.1",
     "sass": "^1.69.5",
-    "typescript": "^5.0.2",
+    "typescript": "^5.3.3",
     "vite": "^5.0.0"
   }
 }

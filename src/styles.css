@@ -4,8 +4,17 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+  font-size: 15px;
   --font-ui: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   --titlebar-height: 28px;
+  --background-color: white;
+
+  --radius: 8px;
+  --gutter: 8px;
+  --gutter-small: 4px;
+
+  --folder-control-bg: transparent;
+  --folder-control-bg__hover: rgba(0, 0, 0, 0.1);
 }
 
 html, body {

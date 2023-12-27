@@ -1,0 +1,20 @@
+.lotion\:add-notebook {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: var(--background-color);
+}
+.lotion\:add-notebook\:header {
+  flex: 0 var(--titlebar-height);
+  text-align: center;
+  border-bottom: 1px solid #ccc;
+}
+.lotion\:add-notebook\:content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+}
+.lotion\:add-notebook\:form {
+  flex: 0;
+}

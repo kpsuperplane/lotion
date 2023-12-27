@@ -1,10 +1,12 @@
-import { EditorProvider, FloatingMenu, BubbleMenu } from "@tiptap/react";
+import * as react from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Document from "@tiptap/extension-document";
 import DragAndDrop from "./extensions/DragAndDrop";
 import Placeholder from "@tiptap/extension-placeholder";
 
 import "./Editor.scss";
+import { useCallback, useMemo, useRef } from "react";
+import { EditorContent } from "@tiptap/react";
 
 // define your extension array
 const EmptyDocument = Document.extend({
@@ -33,10 +35,23 @@ const editorProps = {
 };
 
 export default function Editor() {
-  return (
-    <EditorProvider extensions={extensions} editorProps={editorProps}>
-      <FloatingMenu>This is the floating menu</FloatingMenu>
-      <BubbleMenu>This is the bubble menu</BubbleMenu>
-    </EditorProvider>
+  const saveDebounce = useRef<null | number>(null);
+  const save = useCallback(() => {}, []);
+  const options = useMemo<Partial<react.EditorOptions>>(
+    () => ({
+      extensions,
+      editorProps,
+      onUpdate: () => {
+        if (saveDebounce.current != null) {
+          clearTimeout(saveDebounce.current);
+        }
+        saveDebounce.current = setTimeout(save, 5000);
+      },
+    }),
+    [save],
   );
+
+  const editor = react.useEditor(options);
+
+  return <EditorContent editor={editor} />;
 }

@@ -1,0 +1,64 @@
+.lotion\:folder {
+  &\:header {
+    margin-inline: var(--gutter);
+    display: flex;
+    justify-content: flex-end;
+    font-size: 0.9rem;
+    gap: var(--gutter-small);
+    align-items: center;
+    padding: var(--gutter-small);
+    padding-inline-start: var(--gutter);
+    transition: all 200ms;
+    border-radius: 4px;
+    &\:name {
+      user-select: none;
+      pointer-events: none;
+      -webkit-user-select: none;
+      margin: 0;
+      flex: 1;
+      font-size: 1em;
+      line-height: 1em;
+      font-weight: 500;
+    }
+    &.active {
+      box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
+      background: var(--background-color);
+      .lotion\:folder\:header\:name {
+        font-weight: 600;
+      }
+    }
+  }
+  &.selectable {
+    .lotion\:folder\:header {
+      &:not(.active):hover {
+        background: rgba(0, 0, 0, 0.07);
+      }
+    }
+  }
+  &\:control {
+    &\:item {
+      padding: 0;
+      margin: 0;
+      flex: 0;
+      border: none;
+      font-size: 1.2em;
+      padding: var(--gutter-small);
+      background: var(--folder-control-bg);
+      display: flex;
+      border-radius: 4px;
+      transition: all 200ms;
+      opacity: 0;
+      transform: translateZ(0) scale(1);
+      &:hover {
+        background: var(--folder-control-bg__hover);
+        opacity: 1!important;
+      }
+      &:active {
+        transform: scale(0.9);
+      }
+    }
+    &:hover &\:item {
+      opacity: 0.5;
+    }
+  }
+}

@@ -1,0 +1,21 @@
+.lotion\:sidebar {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  &\:header {
+    border-bottom-color: transparent;
+  }
+  &\:notebook {
+    margin: var(--gutter);
+    border-style: none;
+    background: rgba(0, 0, 0, 0.08);
+    border-radius: var(--radius);
+    text-align: start;
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: var(--gutter);
+    display: flex;
+    gap: var(--gutter-small);
+    align-items: center;
+  }
+}

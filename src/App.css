@@ -6,7 +6,7 @@
 
 .lotion\:layout\:body {
   flex: 1;
-  background-color: white;
+  background-color: var(--background-color);
 }
 
 .lotion\:layout\:sidebar {

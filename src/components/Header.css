@@ -1,0 +1,15 @@
+.lotion\:header {
+  flex: 0 var(--titlebar-height);
+  border-bottom: 1px solid #eee;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+.lotion\:header\:title {
+  font-size: 14px;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
+  font-weight: 600;
+}
