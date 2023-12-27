@@ -1,6 +1,6 @@
 import "./App.css";
-import Page from "./Page";
-import Sidebar from "./Sidebar";
+import Page from "./views/Page";
+import Sidebar from "./components/Sidebar";
 
 export default function App() {
   return (

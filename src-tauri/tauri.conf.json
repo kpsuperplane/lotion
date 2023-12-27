@@ -29,7 +29,7 @@
     "windows": [
       {
         "windowEffects": {
-          "effects": ["light", "blur"]
+          "effects": ["fullScreenUI", "blur"]
         },
         "fullscreen": false,
         "resizable": true,

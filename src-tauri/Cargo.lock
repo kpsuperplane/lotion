@@ -1875,6 +1875,7 @@ dependencies = [
  "tauri",
  "tauri-build",
  "tauri-plugin-shell",
+ "tauri-plugin-store",
 ]
 
 [[package]]
@@ -3417,6 +3418,18 @@ dependencies = [
  "serde",
  "serde_json",
  "shared_child",
+ "tauri",
+ "thiserror",
+]
+
+[[package]]
+name = "tauri-plugin-store"
+version = "2.0.0-alpha.6"
+source = "git+https://github.com/tauri-apps/plugins-workspace?branch=v2#38b5d37b5447e19931b1048a3d88fdca44fe0a22"
+dependencies = [
+ "log",
+ "serde",
+ "serde_json",
  "tauri",
  "thiserror",
 ]
