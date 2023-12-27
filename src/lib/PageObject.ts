@@ -12,9 +12,14 @@ export default class PageObject {
   static async read(page: PageObject) {
     const exists = await fs.exists(page.indexDocumentPath);
     if (!exists) {
-      await fs.writeTextFile(page.indexDocumentPath, "", {create: true});
+      await fs.writeTextFile(page.indexDocumentPath, "", { create: true });
     }
     const data = await fs.readTextFile(page.indexDocumentPath);
     return data;
+  }
+  static async write(page: PageObject, text: string) {
+    return await fs.writeTextFile(page.indexDocumentPath, text, {
+      create: true,
+    });
   }
 }

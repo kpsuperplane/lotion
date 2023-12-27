@@ -1,13 +1,11 @@
-import * as react from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Document from "@tiptap/extension-document";
-import DragAndDrop from "./extensions/DragAndDrop";
 import Placeholder from "@tiptap/extension-placeholder";
+import { useMemo } from "react";
+import { EditorContent, EditorOptions, useEditor } from "@tiptap/react";
 
+import DragAndDrop from "./extensions/DragAndDrop";
 import "./Editor.scss";
-import { useCallback, useMemo, useRef } from "react";
-import { EditorContent } from "@tiptap/react";
-
 // define your extension array
 const EmptyDocument = Document.extend({
   content: "heading block*",
@@ -34,24 +32,19 @@ const editorProps = {
   },
 };
 
-export default function Editor() {
-  const saveDebounce = useRef<null | number>(null);
-  const save = useCallback(() => {}, []);
-  const options = useMemo<Partial<react.EditorOptions>>(
+type Props = {
+  options?: Partial<EditorOptions>;
+};
+export default function Editor(props: Props) {
+  const options = useMemo<Partial<EditorOptions>>(
     () => ({
       extensions,
       editorProps,
-      onUpdate: () => {
-        if (saveDebounce.current != null) {
-          clearTimeout(saveDebounce.current);
-        }
-        saveDebounce.current = setTimeout(save, 5000);
-      },
+      ...props.options,
     }),
-    [save],
+    [props.options],
   );
-
-  const editor = react.useEditor(options);
+  const editor = useEditor(options);
 
   return <EditorContent editor={editor} />;
 }
