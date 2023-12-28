@@ -19,6 +19,8 @@ import { ListNode, ListItemNode } from "@lexical/list";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { HorizontalRuleNode } from "@lexical/react/LexicalHorizontalRuleNode";
 import { ListPlugin } from "@lexical/react/LexicalListPlugin";
+import { TablePlugin } from "@lexical/react/LexicalTablePlugin";
+import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
 
 import "./Editor.scss";
 import EquationsPlugin from "./plugins/EquationsPlugin";
@@ -67,9 +69,12 @@ export default function Editor({ page, onChange }: Props) {
         QuoteNode,
         HorizontalRuleNode,
         LinkNode,
+        TableCellNode,
+        TableNode,
+        TableRowNode,
       ],
     }),
-    [content],
+    [content, page.path],
   );
   const [rootRef, setRootRef] = useState<null | HTMLDivElement>(null);
   return (
@@ -87,6 +92,7 @@ export default function Editor({ page, onChange }: Props) {
       <EquationsPlugin />
       <MyCustomAutoFocusPlugin />
       <ListPlugin />
+      <TablePlugin />
       {rootRef != null ? <DraggableBlockPlugin anchorElem={rootRef} /> : ""}
       <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
       <OnChangePlugin
