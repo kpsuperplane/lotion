@@ -18,7 +18,7 @@ export const PhrasingContent = [
 ];
 export const RootContent = [
   // Blockquote
-  // Break
+  Break,
   // Code
   // Definition
   // Delete

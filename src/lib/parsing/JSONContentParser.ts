@@ -1,5 +1,5 @@
 import { Root } from "mdast";
-import { parseAnyToMarkdown } from "./Parser";
+import { parseAnyToJSONContent, parseAnyToMarkdown } from "./Parser";
 import { RootContent } from "./collections";
 import { JSONContent } from "@tiptap/react";
 
@@ -11,6 +11,17 @@ const JSONContentParser = {
         parseAnyToMarkdown<Root["children"][0]>(RootContent, content),
       ),
     };
+  },
+  toJSONContent: (input: Root): undefined | JSONContent => {
+    const content = input.children.map((child) =>
+      parseAnyToJSONContent(RootContent, child),
+    );
+    return content.length > 0
+      ? {
+          type: "doc",
+          content,
+        }
+      : undefined;
   },
 };
 

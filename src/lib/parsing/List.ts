@@ -1,5 +1,5 @@
 import * as mdast from "mdast";
-import { Parser, parseAnyToMarkdown } from "./Parser";
+import { Parser, parseAnyToJSONContent, parseAnyToMarkdown } from "./Parser";
 import { ListItemContent } from "./collections";
 import { nullthrows } from "./util";
 
@@ -8,8 +8,21 @@ export const ListItem: Parser<mdast.ListItem> = {
     if (input.type === "listItem") {
       return {
         type: "listItem",
-        children: input.content!.map((child) =>
-          parseAnyToMarkdown<mdast.ListItem['children'][0]>(ListItemContent, child),
+        children: (input.content ?? []).map((child) =>
+          parseAnyToMarkdown<mdast.ListItem["children"][0]>(
+            ListItemContent,
+            child,
+          ),
+        ),
+      };
+    }
+  },
+  toJSONContent: (input) => {
+    if (input.type === "listItem") {
+      return {
+        type: "listItem",
+        content: input.children.map((child) =>
+          parseAnyToJSONContent(ListItemContent, child),
         ),
       };
     }
@@ -35,6 +48,25 @@ export const List: Parser<mdast.List> = {
           nullthrows(ListItem.toMarkdown(item)),
         ),
       };
+    }
+  },
+  toJSONContent: (input) => {
+    if (input.type === "list") {
+      const content = input.children.map((child) =>
+        nullthrows(ListItem.toJSONContent(child)),
+      );
+      if (input.ordered === true) {
+        return {
+          type: "orderedList",
+          attrs: { start: input.start ?? 1 },
+          content,
+        };
+      } else {
+        return {
+          type: "bulletList",
+          content,
+        };
+      }
     }
   },
 };

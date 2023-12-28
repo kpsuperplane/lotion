@@ -6,13 +6,15 @@ import "./Page.css";
 import Editor from "../components/Editor";
 import Header from "../components/Header";
 import PageObject from "../lib/PageObject";
-import { tipTapToMarkdown } from "../lib/Markdown";
+import { markdownToTipTap, tipTapToMarkdown } from "../lib/Markdown";
 
 type Props = {
   page: PageObject;
 };
 function Page({ page }: Props) {
   const data = usePromise(PageObject.read, [page]);
+
+  const content = useMemo(() => markdownToTipTap(data), [data]);
 
   const [dirty, setDirty] = useState(false);
 
@@ -25,9 +27,10 @@ function Page({ page }: Props) {
     },
     [page],
   );
-
+  
   const options = useMemo<Partial<EditorOptions>>(
     () => ({
+      content,
       onUpdate: (e) => {
         setDirty(true);
         if (saveDebounce.current != null) {
@@ -36,7 +39,7 @@ function Page({ page }: Props) {
         saveDebounce.current = setTimeout(() => save(e.editor), 4000);
       },
     }),
-    [save],
+    [content, save],
   );
   return (
     <div className="lotion:page">
