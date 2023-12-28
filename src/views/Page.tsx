@@ -1,5 +1,4 @@
 import { Suspense, useCallback, useRef, useState } from "react";
-import usePromise from "react-promise-suspense";
 import { $convertToMarkdownString } from "@lexical/markdown";
 
 import "./Page.css";
@@ -13,7 +12,6 @@ type Props = {
   page: PageObject;
 };
 function Page({ page }: Props) {
-  const content = usePromise(PageObject.read, [page]);
 
   const [dirty, setDirty] = useState(false);
 
@@ -25,7 +23,6 @@ function Page({ page }: Props) {
         PageObject.write(page, markdown).then(() => {
           setDirty(false);
         });
-        console.log(markdown);
       });
     },
     [page],
@@ -46,7 +43,7 @@ function Page({ page }: Props) {
     <div className="lotion:page">
       <Header title={`${page.name}${dirty ? "*" : ""}`}></Header>
       <main className="lotion:page:editor">
-        <Editor content={content} onChange={onChange} />
+        <Editor page={page} onChange={onChange} />
       </main>
     </div>
   );

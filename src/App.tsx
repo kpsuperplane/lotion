@@ -9,7 +9,7 @@ export default function App() {
   const body = useMemo(() => {
     switch (view?.type) {
       case "page":
-        return <Page page={view.page} />;
+        return <Page page={view.page} key={view.page.path} />;
       case null:
         return null;
     }

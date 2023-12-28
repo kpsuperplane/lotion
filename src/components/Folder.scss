@@ -1,4 +1,22 @@
 .lotion\:folder {
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--gutter);
+  &.root {
+    margin-top: 0;
+    > .lotion\:folder\:header {
+      padding-block: 0;
+      > .lotion\:folder\:header\:name {
+        color: rgba(0, 0, 0, 0.5);
+      }
+      &:hover {
+        background: none;
+      }
+    }
+    > .lotion\:folder\:body {
+      padding-inline-start: 0;
+    }
+  }
   &\:header {
     margin-inline: var(--gutter);
     display: flex;
@@ -9,24 +27,32 @@
     padding: var(--gutter-small);
     padding-inline-start: var(--gutter);
     transition: all 200ms;
+    box-sizing: content-box;
     border-radius: var(--radius);
     &\:name {
       user-select: none;
       pointer-events: none;
       -webkit-user-select: none;
       margin: 0;
-      flex: 1;
       font-size: 1em;
       line-height: 1em;
       font-weight: 500;
+      display: block;
+      flex: 1;
+      min-width: 0;
+      padding: 0;
+      margin: 0;
+      width: 'auto';
+      border-style: none;
+      background: none;
+      outline: none;
       &\:edit {
         user-select: auto;
         pointer-events: all;
-        padding: 0;
-        margin: 0;
-        border-style: none;
-        outline: none;
       }
+    }
+    &:not(.active):hover {
+      background: rgba(0, 0, 0, 0.07);
     }
     &.active {
       box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
@@ -36,30 +62,34 @@
       }
     }
   }
-  &.selectable {
-    .lotion\:folder\:header {
-      &:not(.active):hover {
-        background: rgba(0, 0, 0, 0.07);
-      }
-    }
+  &\:icon {
+    padding: 0;
+    margin: 0;
+    flex: 0;
+    border: none;
+    font-size: 1.2em;
+    padding: var(--gutter-small);
+    background: none;
+    display: flex;
+    border-radius: 4px;
+  }
+  &\:body {
+    padding-inline-start: var(--gutter);
+    display: flex;
+    flex-direction: column;
+  }
+  &\:add-page {
+    margin-top: var(--gutter);
   }
   &\:control {
     &\:item {
-      padding: 0;
-      margin: 0;
-      flex: 0;
-      border: none;
-      font-size: 1.2em;
-      padding: var(--gutter-small);
       background: var(--folder-control-bg);
-      display: flex;
-      border-radius: 4px;
       transition: all 200ms;
       opacity: 0;
       transform: translateZ(0) scale(1);
       &:hover {
         background: var(--folder-control-bg__hover);
-        opacity: 1!important;
+        opacity: 1 !important;
       }
       &:active {
         transform: scale(0.9);

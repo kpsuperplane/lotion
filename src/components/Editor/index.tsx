@@ -25,6 +25,8 @@ import EquationsPlugin from "./plugins/EquationsPlugin";
 import { EquationNode } from "./nodes/EquationNode";
 import TRANSFORMERS from "./transformers";
 import DraggableBlockPlugin from "./plugins/DraggableBlockPlugin";
+import PageObject from "../../lib/PageObject";
+import usePromise from "react-promise-suspense";
 
 const theme = {};
 function onError(error: Error) {
@@ -43,16 +45,17 @@ function MyCustomAutoFocusPlugin() {
 }
 
 type Props = {
-  content: string;
+  page: PageObject;
   onChange: (editorState: EditorState) => void;
 };
-export default function Editor({ content, onChange }: Props) {
+export default function Editor({ page, onChange }: Props) {
+  const content = usePromise(PageObject.read, [page]);
   const initialConfig = useMemo<InitialConfigType>(
     () => ({
       editorState: () => {
         $convertFromMarkdownString(content, TRANSFORMERS);
       },
-      namespace: "lotion:editor",
+      namespace: `lotion:editor:${page.path}`,
       theme,
       onError,
       nodes: [
@@ -86,7 +89,11 @@ export default function Editor({ content, onChange }: Props) {
       <ListPlugin />
       {rootRef != null ? <DraggableBlockPlugin anchorElem={rootRef} /> : ""}
       <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
-      <OnChangePlugin ignoreHistoryMergeTagChange={true} ignoreSelectionChange={true} onChange={onChange} />
+      <OnChangePlugin
+        ignoreHistoryMergeTagChange={true}
+        ignoreSelectionChange={true}
+        onChange={onChange}
+      />
     </LexicalComposer>
   );
 }

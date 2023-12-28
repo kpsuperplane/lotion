@@ -28,8 +28,17 @@ export default class PageObject {
     return data;
   }
   static async write(page: PageObject, text: string) {
-    return await fs.writeTextFile(page.indexDocumentPath, text, {
+    await fs.truncate(page.indexDocumentPath, 0);
+    await fs.writeTextFile(page.indexDocumentPath, text, {
       create: true,
     });
+  }
+  static async createFolder(page: PageObject) {
+    if (!(await fs.exists(page.path))) {
+      await fs.mkdir(page.path);
+    }
+  }
+  static async delete(page: PageObject) {
+    await fs.remove(page.path, { recursive: true });
   }
 }
