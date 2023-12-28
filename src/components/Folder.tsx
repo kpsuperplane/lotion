@@ -110,11 +110,11 @@ export default function Folder({
   const [edit, setEdit] = useState<null | string>(null);
   const saveEdit = useCallback(async () => {
     if (edit != null && edit.trim() !== page.name) {
-      setEdit(null);
       const newPage = await PageObject.rename(page, edit.trim());
       optimisticUpdatePageRename?.(page, newPage);
       setView({ type: "page", page: newPage });
     }
+    setEdit(null);
   }, [edit, optimisticUpdatePageRename, page, setView]);
   const onEditChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     setEdit(e.target.value);
