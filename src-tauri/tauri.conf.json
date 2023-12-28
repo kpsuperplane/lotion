@@ -30,7 +30,7 @@
       {
         "fileDropEnabled": false,
         "windowEffects": {
-          "effects": ["fullScreenUI", "blur"]
+          "effects": ["underWindowBackground", "blur"]
         },
         "fullscreen": false,
         "resizable": true,
