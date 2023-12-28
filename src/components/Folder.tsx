@@ -2,7 +2,15 @@ import * as fs from "tauri-plugin-fs";
 import { Plus } from "iconoir-react";
 
 import "./Folder.scss";
-import { useMemo, Suspense, useEffect, useState, useCallback } from "react";
+import {
+  useMemo,
+  Suspense,
+  useEffect,
+  useState,
+  useCallback,
+  ChangeEvent,
+  KeyboardEventHandler,
+} from "react";
 import usePromise from "react-promise-suspense";
 import { useViewContext } from "../lib/View";
 import PageObject from "../lib/PageObject";
@@ -16,7 +24,7 @@ interface ChildrenProps {
 }
 function Children({ path }: ChildrenProps): React.ReactNode {
   const [items, setItems] = useState<fs.DirEntry[]>(
-    usePromise(readFolder, [path])
+    usePromise(readFolder, [path]),
   );
 
   useEffect(() => {
@@ -30,10 +38,28 @@ function Children({ path }: ChildrenProps): React.ReactNode {
     };
   }, [path]);
 
+  const optimisticUpdatePageRename = useCallback(
+    (oldPage: PageObject, newPage: PageObject) => {
+      setItems(
+        items.map((item) =>
+          item.name === oldPage.name ? { ...item, name: newPage.name } : item,
+        ),
+      );
+    },
+    [items],
+  );
+
   return items.map((item) => {
     const newPath = `${path}/${item.name}`;
     if (item.isDirectory) {
-      return <Folder path={newPath} key={newPath} root={false} />;
+      return (
+        <Folder
+          path={newPath}
+          optimisticUpdatePageRename={optimisticUpdatePageRename}
+          key={newPath}
+          root={false}
+        />
+      );
     }
     return null;
   });
@@ -42,16 +68,52 @@ function Children({ path }: ChildrenProps): React.ReactNode {
 interface Props {
   path: string;
   root: boolean;
+  optimisticUpdatePageRename?: (
+    oldPage: PageObject,
+    newPage: PageObject,
+  ) => void;
 }
-export default function Folder({ path, root }: Props): React.ReactNode {
+export default function Folder({
+  path,
+  root,
+  optimisticUpdatePageRename,
+}: Props): React.ReactNode {
   const page = useMemo(() => new PageObject(path), [path]);
   const { view, setView } = useViewContext();
   const isSelected = view?.type === "page" && view.page.path === path;
+  const [edit, setEdit] = useState<null | string>(null);
+  const saveEdit = useCallback(async () => {
+    if (edit != null) {
+      setEdit(null);
+      const newPage = await PageObject.rename(page, edit);
+      optimisticUpdatePageRename?.(page, newPage);
+      setView({ type: "page", page: newPage });
+    }
+  }, [edit, optimisticUpdatePageRename, page, setView]);
+  const onEditChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    setEdit(e.target.value);
+  }, []);
+
+  const onSaveKeyDown: KeyboardEventHandler<HTMLInputElement> = useCallback(
+    (event) => {
+      if (event.key === "Enter") {
+        saveEdit();
+      } else if (event.key === "Escape") {
+        setEdit(null);
+      }
+    },
+    [saveEdit],
+  );
+
   const onSelect = useCallback(() => {
     if (!root) {
-      setView({ type: "page", page });
+      if (isSelected) {
+        setEdit(page.name);
+      } else {
+        setView({ type: "page", page });
+      }
     }
-  }, [page, root, setView]);
+  }, [isSelected, page, root, setView]);
   return (
     <div className={`lotion:folder ${root ? "" : "selectable"}`}>
       <header
@@ -60,7 +122,20 @@ export default function Folder({ path, root }: Props): React.ReactNode {
         }`}
         onClick={onSelect}
       >
-        <h3 className="lotion:folder:header:name">{page.name}</h3>
+        {edit != null ? (
+          <input
+            className="lotion:folder:header:name lotion:folder:header:name:edit"
+            type="text"
+            value={edit}
+            onBlur={saveEdit}
+            onKeyDown={onSaveKeyDown}
+            placeholder={page.name}
+            onChange={onEditChange}
+            autoFocus
+          />
+        ) : (
+          <h3 className="lotion:folder:header:name">{page.name}</h3>
+        )}
         <button className="lotion:folder:control:item">
           <Plus height="1em" width="1em" strokeWidth={3} />
         </button>

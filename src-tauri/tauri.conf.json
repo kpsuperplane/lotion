@@ -28,6 +28,7 @@
     },
     "windows": [
       {
+        "fileDropEnabled": false,
         "windowEffects": {
           "effects": ["fullScreenUI", "blur"]
         },

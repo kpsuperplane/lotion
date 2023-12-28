@@ -9,6 +9,16 @@ export default class PageObject {
   get indexDocumentPath() {
     return `${this.path}/${this.name}.md`;
   }
+  static async rename(page: PageObject, name: string): Promise<PageObject> {
+    const newPage = new PageObject(
+      page.path.substring(0, page.path.lastIndexOf(page.name)) + name,
+    );
+    if (await fs.exists(page.indexDocumentPath)) {
+      await fs.rename(page.indexDocumentPath, `${page.path}/${name}.md`, {});
+    }
+    await fs.rename(page.path, newPage.path, {});
+    return newPage;
+  }
   static async read(page: PageObject) {
     const exists = await fs.exists(page.indexDocumentPath);
     if (!exists) {

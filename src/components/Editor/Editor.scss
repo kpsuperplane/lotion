@@ -1,11 +1,15 @@
 .lotion\:editor {
-  padding-inline: 28px;
-  max-width: 768px;
+  position: relative;
   box-sizing: content-box;
   margin: 0 auto;
-  outline: 0px solid transparent;
-  padding-bottom: 50px;
-  @import "./Typebase.scss";
+  max-width: 768px;
+  &\:content-editable {
+    padding-inline: 32px;
+    outline: 0px solid transparent;
+    padding-bottom: 50px;
+    position: relative;
+    @import "./Typebase.scss";
+  }
   h1:first-child {
     font-size: 2.5rem;
   }

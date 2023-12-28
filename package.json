@@ -11,16 +11,14 @@
     "tauri": "tauri"
   },
   "dependencies": {
+    "@lexical/react": "^0.12.5",
     "@tauri-apps/api": "^2.0.0-alpha.13",
     "@tauri-apps/plugin-dialog": "^2.0.0-alpha.5",
     "@tauri-apps/plugin-shell": "^2.0.0-alpha.3",
-    "@tiptap/extension-document": "^2.1.13",
-    "@tiptap/extension-placeholder": "^2.1.13",
-    "@tiptap/pm": "^2.1.13",
-    "@tiptap/react": "^2.1.13",
-    "@tiptap/starter-kit": "^2.1.13",
     "@types/mdast": "^4.0.3",
     "iconoir-react": "^7.2.0",
+    "katex": "^0.16.9",
+    "lexical": "^0.12.5",
     "mdast-util-from-markdown": "^2.0.0",
     "mdast-util-to-markdown": "^2.1.0",
     "react": "^18.2.0",
@@ -31,6 +29,7 @@
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.0.0-alpha.20",
+    "@types/katex": "^0.16.7",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
     "@typescript-eslint/eslint-plugin": "^6.16.0",

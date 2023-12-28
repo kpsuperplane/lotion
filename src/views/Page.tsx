@@ -1,51 +1,52 @@
-import { Suspense, useCallback, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useRef, useState } from "react";
 import usePromise from "react-promise-suspense";
-import type { Editor as TipTapEditor, EditorOptions } from "@tiptap/core";
+import { $convertToMarkdownString } from "@lexical/markdown";
 
 import "./Page.css";
 import Editor from "../components/Editor";
 import Header from "../components/Header";
 import PageObject from "../lib/PageObject";
-import { markdownToTipTap, tipTapToMarkdown } from "../lib/Markdown";
+import { EditorState } from "lexical";
+import TRANSFORMERS from "../components/Editor/transformers";
 
 type Props = {
   page: PageObject;
 };
 function Page({ page }: Props) {
-  const data = usePromise(PageObject.read, [page]);
-
-  const content = useMemo(() => markdownToTipTap(data), [data]);
+  const content = usePromise(PageObject.read, [page]);
 
   const [dirty, setDirty] = useState(false);
 
   const saveDebounce = useRef<null | number>(null);
   const save = useCallback(
-    (editor: TipTapEditor) => {
-      PageObject.write(page, tipTapToMarkdown(editor.getJSON())).then(() => {
-        setDirty(false);
+    (editorState: EditorState) => {
+      editorState.read(() => {
+        const markdown = $convertToMarkdownString(TRANSFORMERS);
+        PageObject.write(page, markdown).then(() => {
+          setDirty(false);
+        });
+        console.log(markdown);
       });
     },
     [page],
   );
-  
-  const options = useMemo<Partial<EditorOptions>>(
-    () => ({
-      content,
-      onUpdate: (e) => {
-        setDirty(true);
-        if (saveDebounce.current != null) {
-          clearTimeout(saveDebounce.current);
-        }
-        saveDebounce.current = setTimeout(() => save(e.editor), 4000);
-      },
-    }),
-    [content, save],
+
+  const onChange = useCallback(
+    (editorState: EditorState) => {
+      if (editorState.toJSON())
+      setDirty(true);
+      if (saveDebounce.current != null) {
+        clearTimeout(saveDebounce.current);
+      }
+      saveDebounce.current = setTimeout(() => save(editorState), 4000);
+    },
+    [save],
   );
   return (
     <div className="lotion:page">
       <Header title={`${page.name}${dirty ? "*" : ""}`}></Header>
       <main className="lotion:page:editor">
-        <Editor options={options} />
+        <Editor content={content} onChange={onChange} />
       </main>
     </div>
   );

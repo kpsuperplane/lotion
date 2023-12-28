@@ -19,6 +19,14 @@
       font-size: 1em;
       line-height: 1em;
       font-weight: 500;
+      &\:edit {
+        user-select: auto;
+        pointer-events: all;
+        padding: 0;
+        margin: 0;
+        border-style: none;
+        outline: none;
+      }
     }
     &.active {
       box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
