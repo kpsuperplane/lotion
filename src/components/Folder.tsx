@@ -1,121 +1,43 @@
-import * as fs from "tauri-plugin-fs";
-import { Plus, PagePlus, MoreHoriz } from "iconoir-react";
+import { Plus, PagePlus, MoreHoriz, Page } from "iconoir-react";
 import { confirm } from "@tauri-apps/plugin-dialog";
 
 import "./Folder.scss";
 import {
-  useMemo,
-  Suspense,
-  useEffect,
+  // useMemo,
+  // Suspense,
+  // useEffect,
   useState,
   useCallback,
   ChangeEvent,
   KeyboardEventHandler,
   MouseEventHandler,
 } from "react";
-import usePromise from "react-promise-suspense";
 import { useViewContext } from "../lib/View";
-import PageObject from "../lib/PageObject";
 import { Menu, MenuItem } from "@tauri-apps/api/menu";
-
-async function readFolder(path: string): Promise<fs.DirEntry[]> {
-  return await fs.readDir(path);
-}
-
-interface ChildrenProps {
-  path: string;
-}
-function Children({ path }: ChildrenProps): React.ReactNode {
-  const [items, setItems] = useState<fs.DirEntry[]>(
-    usePromise(readFolder, [path]),
-  );
-
-  useEffect(() => {
-    const watcher = fs.watch(path, () => {
-      void readFolder(path).then(setItems);
-    });
-    return () => {
-      void watcher.then((unwatch) => {
-        unwatch();
-      });
-    };
-  }, [path]);
-
-  const optimisticUpdatePageRename = useCallback(
-    (oldPage: PageObject, newPage: PageObject) => {
-      setItems(
-        items.map((item) =>
-          item.name === oldPage.name ? { ...item, name: newPage.name } : item,
-        ),
-      );
-    },
-    [items],
-  );
-
-  const optimisticDeletePage = useCallback(
-    (page: PageObject) => {
-      setItems(items.filter((item) => item.name !== page.name));
-    },
-    [items],
-  );
-
-  const optimisticAddPage = useCallback(
-    (page: PageObject) => {
-      setItems([
-        ...items,
-        { name: page.name, isDirectory: true, isFile: false, isSymlink: false },
-      ]);
-    },
-    [items],
-  );
-
-  return items.map((item) => {
-    const newPath = `${path}/${item.name}`;
-    if (item.isDirectory) {
-      return (
-        <Folder
-          path={newPath}
-          optimisticAddPage={optimisticAddPage}
-          optimisticUpdatePageRename={optimisticUpdatePageRename}
-          optimisticDeletePage={optimisticDeletePage}
-          key={newPath}
-          root={false}
-        />
-      );
-    }
-    return null;
-  });
-}
+import PageRef, { usePageChildren, usePageName } from "../lib/fs/PageRef";
 
 interface Props {
-  path: string;
-  root: boolean;
-  optimisticUpdatePageRename?: (
-    oldPage: PageObject,
-    newPage: PageObject,
-  ) => void;
-  optimisticDeletePage?: (page: PageObject) => void;
-  optimisticAddPage?: (page: PageObject) => void;
+  pageRef: PageRef;
 }
-export default function Folder({
-  path,
-  root,
-  optimisticUpdatePageRename,
-  optimisticAddPage,
-  optimisticDeletePage,
-}: Props): React.ReactNode {
-  const page = useMemo(() => new PageObject(path), [path]);
-  const { view, setView } = useViewContext();
-  const isSelected = view?.type === "page" && view.page.path === path;
+export default function Folder({ pageRef }: Props): React.ReactNode {
+  const { view, openPageView, clearView } = useViewContext();
+  const isSelected = view?.type === "page" && view.pageRef === pageRef;
+
+  const name = usePageName(pageRef);
+
   const [edit, setEdit] = useState<null | string>(null);
+  const [editSaving, setEditSaving] = useState(false);
   const saveEdit = useCallback(async () => {
-    if (edit != null && edit.trim() !== page.name) {
-      const newPage = await PageObject.rename(page, edit.trim());
-      optimisticUpdatePageRename?.(page, newPage);
-      setView({ type: "page", page: newPage });
+    if (edit != null && edit.trim() !== name) {
+      setEditSaving(true);
+      try {
+        await pageRef.rename(edit.trim());
+      } finally {
+        setEditSaving(false);
+      }
     }
     setEdit(null);
-  }, [edit, optimisticUpdatePageRename, page, setView]);
+  }, [edit, name, pageRef]);
   const onEditChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     setEdit(e.target.value);
   }, []);
@@ -132,14 +54,14 @@ export default function Folder({
   );
 
   const onSelect = useCallback(() => {
-    if (!root) {
+    if (!pageRef.isRoot) {
       if (isSelected) {
-        setEdit(page.name);
+        setEdit(name);
       } else {
-        setView({ type: "page", page });
+        openPageView(pageRef);
       }
     }
-  }, [isSelected, page, root, setView]);
+  }, [isSelected, name, openPageView, pageRef]);
 
   const onMoreOptions: MouseEventHandler<HTMLButtonElement> = useCallback(
     async (e) => {
@@ -148,7 +70,7 @@ export default function Folder({
         MenuItem.new({
           text: "Rename...",
           action: () => {
-            setEdit(page.name);
+            setEdit(name);
           },
         }),
         MenuItem.new({
@@ -158,16 +80,18 @@ export default function Folder({
               await confirm(
                 "This action cannot be reverted. The page and all of its children will be deleted.\nAre you sure?",
                 {
-                  title: `Delete "${page.name}"?`,
+                  title: `Delete "${name}"?`,
                   type: "warning",
                 },
               )
             ) {
-              if (isSelected) {
-                setView(null);
+              if (
+                view?.type === "page" &&
+                view.pageRef._path.includes(pageRef._path)
+              ) {
+                clearView();
               }
-              optimisticDeletePage?.(page);
-              await PageObject.delete(page);
+              pageRef.delete();
             }
           },
         }),
@@ -175,47 +99,45 @@ export default function Folder({
       const menu = await Menu.new({ items });
       menu.popup();
     },
-    [isSelected, optimisticDeletePage, page, setView],
+    [clearView, name, pageRef, view?.pageRef, view?.type],
   );
 
-  const [addPageName, setAddPageName] = useState<null | string>(null);
-  const addPage: MouseEventHandler<HTMLButtonElement> = useCallback(
+  const [newPageName, setNewPageName] = useState<null | string>(null);
+  const newPage: MouseEventHandler<HTMLButtonElement> = useCallback(
     async (e) => {
       e.stopPropagation();
-      setAddPageName("");
+      setNewPageName("");
     },
     [],
   );
 
-  const cancelAddPage = useCallback(() => {
-    setAddPageName(null);
+  const cancelNewPage = useCallback(() => {
+    setNewPageName(null);
   }, []);
 
-  const saveAddPage = useCallback(async () => {
-    const newPage = new PageObject(`${page.path}/${addPageName}`);
-    setAddPageName(null);
-    await PageObject.createFolder(newPage);
-    setTimeout(() => {
-      optimisticAddPage?.(newPage);
-      setView({ type: "page", page: newPage });
-    }, 1000);
-  }, [addPageName, optimisticAddPage, page.path, setView]);
+  const saveNewPage = useCallback(async () => {
+    if (newPageName != null && newPageName.trim() !== "") {
+      const newPage = pageRef.createChild(newPageName.trim());
+      setNewPageName(null);
+      openPageView(newPage);
+    }
+  }, [newPageName, openPageView, pageRef]);
 
-  const onAddPageNameChangeKeyDown: KeyboardEventHandler<HTMLInputElement> =
+  const onNewPageNameChangeKeyDown: KeyboardEventHandler<HTMLInputElement> =
     useCallback(
       (event) => {
         if (event.key === "Enter") {
-          saveAddPage();
+          saveNewPage();
         } else if (event.key === "Escape") {
-          cancelAddPage();
+          cancelNewPage();
         }
       },
-      [cancelAddPage, saveAddPage],
+      [cancelNewPage, saveNewPage],
     );
 
-  const onAddPageNameChange = useCallback(
+  const onNewPageNameChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
-      setAddPageName(e.target.value);
+      setNewPageName(e.target.value);
     },
     [],
   );
@@ -225,30 +147,38 @@ export default function Folder({
     e?.select();
   }, []);
 
+  const children = usePageChildren(pageRef);
+
   return (
-    <div className={`lotion:folder ${root ? "root" : ""}`}>
+    <div className={`lotion:folder ${pageRef.isRoot ? "root" : ""}`}>
       <header
         className={`lotion:folder:header lotion:folder:control ${
-          isSelected && addPageName == null ? "active" : ""
+          isSelected && newPageName == null ? "active" : ""
         }`}
         onClick={onSelect}
       >
+        {!pageRef.isRoot && (
+          <span className="lotion:folder:icon">
+            <Page height="1em" width="1em" strokeWidth={1.5} />
+          </span>
+        )}
         {edit != null ? (
           <input
             className="lotion:folder:header:name lotion:folder:header:name:edit"
             type="text"
+            disabled={editSaving}
             value={edit}
             onBlur={saveEdit}
             onKeyDown={onSaveKeyDown}
-            placeholder={page.name}
+            placeholder={name}
             onChange={onEditChange}
             ref={autoSelect}
             autoFocus
           />
         ) : (
-          <h3 className="lotion:folder:header:name">{page.name}</h3>
+          <h3 className="lotion:folder:header:name">{name}</h3>
         )}
-        {!root && (
+        {!pageRef.isRoot && (
           <button
             className="lotion:folder:icon lotion:folder:control:item"
             onClick={onMoreOptions}
@@ -258,16 +188,14 @@ export default function Folder({
         )}
         <button
           className="lotion:folder:icon lotion:folder:control:item"
-          onClick={addPage}
+          onClick={newPage}
         >
           <Plus height="1em" width="1em" strokeWidth={3} />
         </button>
       </header>
       <div className="lotion:folder:body">
-        <Suspense fallback={null}>
-          <Children path={path} />
-        </Suspense>
-        {addPageName != null && (
+        {children?.map((child) => <Folder pageRef={child} key={child._name} />)}
+        {newPageName != null && (
           <div className="lotion:folder:header lotion:folder:add-page active">
             <span className="lotion:folder:icon">
               <PagePlus height="1em" width="1em" strokeWidth={1.5} />
@@ -276,10 +204,10 @@ export default function Folder({
               type="text"
               className="lotion:folder:header:name lotion:folder:header:name:edit"
               placeholder="Page name..."
-              onKeyDown={onAddPageNameChangeKeyDown}
-              onBlur={cancelAddPage}
+              onKeyDown={onNewPageNameChangeKeyDown}
+              onBlur={cancelNewPage}
               autoFocus
-              onChange={onAddPageNameChange}
+              onChange={onNewPageNameChange}
             />
           </div>
         )}

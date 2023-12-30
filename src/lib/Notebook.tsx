@@ -9,13 +9,41 @@ import {
 } from "react";
 import store from "./Store";
 import AddNotebook from "../views/AddNotebook";
+import PageRef, { IPageRefParent } from "./fs/PageRef";
+import { basename, normalize, resolve } from "path";
 
 const STORAGE_KEY = "notebooks";
 
-export type Notebook = {
-  name: string;
-  path: string;
-};
+type NotebookSerialized = { name: string; path: string };
+export default class Notebook implements IPageRefParent {
+  private static instances: Map<string, Notebook> = new Map();
+  public readonly page: PageRef;
+  private readonly pagePath: string;
+  private constructor(
+    public name: string,
+    public path: string,
+  ) {
+    this.pagePath = resolve(path, "../");
+    this.page = new PageRef(basename(path), this);
+  }
+
+  public serialize(): NotebookSerialized {
+    return { name: this.name, path: this.path };
+  }
+
+  static get(serialized: NotebookSerialized) {
+    const path = normalize(serialized.path);
+    if (!Notebook.instances.has(path)) {
+      Notebook.instances.set(path, new Notebook(serialized.name, path));
+    }
+    return Notebook.instances.get(path)!;
+  }
+
+  // IPageRefParent
+  public getPathForChildPage(): string {
+    return this.pagePath;
+  }
+}
 
 type NotebooksContext = {
   addNotebook: (notebook: Notebook) => void;
@@ -26,22 +54,26 @@ const NotebooksContext = createContext<NotebooksContext>({
   addNotebook: () => {},
 });
 
-const CurrentNotebookContext = createContext<Notebook>({ path: "", name: "" });
+const CurrentNotebookContext = createContext<Notebook>(null as never);
 
 export function NotebooksProvider({ children }: PropsWithChildren) {
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
   useEffect(() => {
-    store.get<Notebook[]>(STORAGE_KEY).then((data) => setNotebooks(data ?? []));
+    store
+      .get<NotebookSerialized[]>(STORAGE_KEY)
+      .then((data) => setNotebooks(data?.map((n) => Notebook.get(n)) ?? []));
   }, []);
   const addNotebook = useCallback(
     async (notebook: Notebook) => {
-      console.log(notebook);
       const newValue = [notebook, ...notebooks];
-      await store.set(STORAGE_KEY, newValue);
+      await store.set(
+        STORAGE_KEY,
+        newValue.map((n) => n.serialize()),
+      );
       await store.save();
       setNotebooks(newValue);
     },
-    [notebooks]
+    [notebooks],
   );
 
   const [currentNotebook, setCurrentNotebook] = useState<null | Notebook>(null);
@@ -52,7 +84,7 @@ export function NotebooksProvider({ children }: PropsWithChildren) {
 
   const value = useMemo(
     () => ({ notebooks, addNotebook }),
-    [notebooks, addNotebook]
+    [notebooks, addNotebook],
   );
 
   return (

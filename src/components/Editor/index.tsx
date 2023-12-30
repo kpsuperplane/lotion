@@ -27,8 +27,6 @@ import EquationsPlugin from "./plugins/EquationsPlugin";
 import { EquationNode } from "./nodes/EquationNode";
 import TRANSFORMERS from "./transformers";
 import DraggableBlockPlugin from "./plugins/DraggableBlockPlugin";
-import PageObject from "../../lib/PageObject";
-import usePromise from "react-promise-suspense";
 
 const theme = {};
 function onError(error: Error) {
@@ -47,17 +45,17 @@ function MyCustomAutoFocusPlugin() {
 }
 
 type Props = {
-  page: PageObject;
+  initialContent: string;
+  id: string;
   onChange: (editorState: EditorState) => void;
 };
-export default function Editor({ page, onChange }: Props) {
-  const content = usePromise(PageObject.read, [page]);
+export default function Editor({ initialContent, id, onChange }: Props) {
   const initialConfig = useMemo<InitialConfigType>(
     () => ({
       editorState: () => {
-        $convertFromMarkdownString(content, TRANSFORMERS);
+        $convertFromMarkdownString(initialContent, TRANSFORMERS);
       },
-      namespace: `lotion:editor:${page.path}`,
+      namespace: `lotion:editor:${id}`,
       theme,
       onError,
       nodes: [
@@ -74,7 +72,7 @@ export default function Editor({ page, onChange }: Props) {
         TableRowNode,
       ],
     }),
-    [content, page.path],
+    [initialContent, id],
   );
   const [rootRef, setRootRef] = useState<null | HTMLDivElement>(null);
   return (

@@ -332,7 +332,6 @@ function useDraggableBlockMenu(
     }
 
     function onDrop(event: DragEvent): boolean {
-      console.log('hello');
       if (!isDraggingBlockRef.current) {
         return false;
       }
@@ -340,11 +339,9 @@ function useDraggableBlockMenu(
       if (isFileTransfer) {
         return false;
       }
-      console.log('wat');
       const { target, dataTransfer, pageY } = event;
       const dragData = dataTransfer?.getData(DRAG_DATA_FORMAT) || "";
       const draggedNode = $getNodeByKey(dragData);
-      console.log(draggedNode);
       if (!draggedNode) {
         return false;
       }
@@ -352,12 +349,10 @@ function useDraggableBlockMenu(
         return false;
       }
       const targetBlockElem = getBlockElement(anchorElem, editor, event, true);
-      console.log(targetBlockElem);
       if (!targetBlockElem) {
         return false;
       }
       const targetNode = $getNearestNodeFromDOMNode(targetBlockElem);
-      console.log(draggedNode, targetNode);
       if (!targetNode) {
         return false;
       }
@@ -379,7 +374,6 @@ function useDraggableBlockMenu(
       editor.registerCommand(
         DRAGOVER_COMMAND,
         (event) => {
-          console.warn('hello');
           return onDragover(event);
         },
         COMMAND_PRIORITY_LOW,
@@ -387,7 +381,6 @@ function useDraggableBlockMenu(
       editor.registerCommand(
         DROP_COMMAND,
         (event) => {
-          console.error('drop');
           return onDrop(event);
         },
         COMMAND_PRIORITY_HIGH,

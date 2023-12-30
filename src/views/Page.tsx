@@ -4,34 +4,36 @@ import { $convertToMarkdownString } from "@lexical/markdown";
 import "./Page.css";
 import Editor from "../components/Editor";
 import Header from "../components/Header";
-import PageObject from "../lib/PageObject";
 import { EditorState } from "lexical";
 import TRANSFORMERS from "../components/Editor/transformers";
+import PageRef, {
+  usePageContent,
+  usePageName,
+  usePagePath,
+} from "../lib/fs/PageRef";
 
 type Props = {
-  page: PageObject;
+  pageRef: PageRef;
 };
-function Page({ page }: Props) {
-
+function Page({ pageRef }: Props) {
   const [dirty, setDirty] = useState(false);
 
-  const saveDebounce = useRef<null | number>(null);
+  const saveDebounce = useRef<null | NodeJS.Timeout>(null);
   const save = useCallback(
     (editorState: EditorState) => {
       editorState.read(() => {
         const markdown = $convertToMarkdownString(TRANSFORMERS);
-        PageObject.write(page, markdown).then(() => {
+        pageRef.write(markdown).then(() => {
           setDirty(false);
         });
       });
     },
-    [page],
+    [pageRef],
   );
 
   const onChange = useCallback(
     (editorState: EditorState) => {
-      if (editorState.toJSON())
-      setDirty(true);
+      if (editorState.toJSON()) setDirty(true);
       if (saveDebounce.current != null) {
         clearTimeout(saveDebounce.current);
       }
@@ -39,26 +41,34 @@ function Page({ page }: Props) {
     },
     [save],
   );
+
+  const name = usePageName(pageRef);
+  const content = usePageContent(pageRef);
+  const path = usePagePath(pageRef);
+
   return (
     <div className="lotion:page">
-      <Header title={`${page.name}${dirty ? "*" : ""}`}></Header>
+      <Header title={`${name}${dirty ? "*" : ""}`}></Header>
       <main className="lotion:page:editor">
-        <Editor page={page} onChange={onChange} />
+        {content != null && (
+          <Editor initialContent={content} id={path} onChange={onChange} />
+        )}
       </main>
     </div>
   );
 }
 
-export default function WithSuspense({ page }: Props) {
+export default function WithSuspense({ pageRef }: Props) {
+  const name = usePageName(pageRef);
   return (
     <Suspense
       fallback={
         <div className="lotion:page">
-          <Header title={page.name}></Header>
+          <Header title={name}></Header>
         </div>
       }
     >
-      <Page page={page} />
+      <Page pageRef={pageRef} />
     </Suspense>
   );
 }

@@ -6,6 +6,7 @@
     margin-top: 0;
     > .lotion\:folder\:header {
       padding-block: 0;
+      padding-inline-start: var(--gutter);
       > .lotion\:folder\:header\:name {
         color: rgba(0, 0, 0, 0.5);
       }
@@ -25,7 +26,6 @@
     gap: var(--gutter-small);
     align-items: center;
     padding: var(--gutter-small);
-    padding-inline-start: var(--gutter);
     transition: all 200ms;
     box-sizing: content-box;
     border-radius: var(--radius);
@@ -35,7 +35,7 @@
       -webkit-user-select: none;
       margin: 0;
       font-size: 1em;
-      line-height: 1em;
+      line-height: auto;
       font-weight: 500;
       display: block;
       flex: 1;
@@ -46,6 +46,12 @@
       border-style: none;
       background: none;
       outline: none;
+      box-sizing:border-box;
+      max-width: 100%;
+      width: 100%;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow-x: hidden;
       &\:edit {
         user-select: auto;
         pointer-events: all;
@@ -63,7 +69,6 @@
     }
   }
   &\:icon {
-    padding: 0;
     margin: 0;
     flex: 0;
     border: none;

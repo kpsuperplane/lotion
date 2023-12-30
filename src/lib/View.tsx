@@ -1,24 +1,42 @@
-import { PropsWithChildren, createContext, useContext, useMemo, useState } from "react";
-import PageObject from "./PageObject";
+import {
+  PropsWithChildren,
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
+import PageRef from "./fs/PageRef";
 
 type View = {
   type: "page";
-  page: PageObject;
+  pageRef: PageRef;
 } | null;
 
 type ViewContext = {
   view: View;
-  setView: (view: View) => void;
+  openPageView: (pageRef: PageRef) => void;
+  clearView: () => void;
 };
 
 const ViewContext = createContext<ViewContext>({
   view: null,
-  setView: () => {},
+  openPageView: () => {},
+  clearView: () => {},
 });
 
 export function ViewContextProvider({ children }: PropsWithChildren) {
   const [view, setView] = useState<View>(null);
-  const value = useMemo(() => ({ view, setView }), [view, setView]);
+  const clearView = useCallback(() => {
+    setView(null);
+  }, []);
+  const openPageView = useCallback((pageRef: PageRef) => {
+    setView({ type: "page", pageRef });
+  }, []);
+  const value = useMemo(
+    () => ({ view, clearView, openPageView }),
+    [view, clearView, openPageView],
+  );
   return <ViewContext.Provider value={value}>{children}</ViewContext.Provider>;
 }
 

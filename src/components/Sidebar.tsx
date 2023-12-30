@@ -14,7 +14,7 @@ export default function Sidebar() {
         <Book />
         <span>{notebook.name}</span>
       </button>
-      <Folder path={notebook.path} root={true} />
+      <Folder pageRef={notebook.page} />
     </div>
   );
 }

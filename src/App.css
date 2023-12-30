@@ -11,4 +11,5 @@
 
 .lotion\:layout\:sidebar {
   flex: 0 256px;
+  width: 256px;
 }
