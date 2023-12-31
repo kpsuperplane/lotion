@@ -12,6 +12,7 @@
   --radius: 4px;
   --gutter: 8px;
   --gutter-small: 4px;
+  --editor-padding-inline: 32px;
 
   --folder-control-bg: transparent;
   --folder-control-bg__hover: rgba(0, 0, 0, 0.1);

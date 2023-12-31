@@ -11,10 +11,12 @@ import {
   ChangeEvent,
   KeyboardEventHandler,
   MouseEventHandler,
+  useRef,
 } from "react";
 import { useViewContext } from "../lib/View";
 import { Menu, MenuItem } from "@tauri-apps/api/menu";
 import PageRef, { usePageChildren, usePageName } from "../lib/fs/PageRef";
+import useEmojiPicker from "./useEmojiPicker";
 
 interface Props {
   pageRef: PageRef;
@@ -23,7 +25,7 @@ export default function Folder({ pageRef }: Props): React.ReactNode {
   const { view, openPageView, clearView } = useViewContext();
   const isSelected = view?.type === "page" && view.pageRef === pageRef;
 
-  const name = usePageName(pageRef);
+  const { name, emoji } = usePageName(pageRef);
 
   const [edit, setEdit] = useState<null | string>(null);
   const [editSaving, setEditSaving] = useState(false);
@@ -31,13 +33,13 @@ export default function Folder({ pageRef }: Props): React.ReactNode {
     if (edit != null && edit.trim() !== name) {
       setEditSaving(true);
       try {
-        await pageRef.rename(edit.trim());
+        await pageRef.rename(emoji, edit);
       } finally {
         setEditSaving(false);
       }
     }
     setEdit(null);
-  }, [edit, name, pageRef]);
+  }, [edit, emoji, name, pageRef]);
   const onEditChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     setEdit(e.target.value);
   }, []);
@@ -53,69 +55,68 @@ export default function Folder({ pageRef }: Props): React.ReactNode {
     [saveEdit],
   );
 
-  const onSelect = useCallback(() => {
-    if (!pageRef.isRoot) {
-      if (isSelected) {
-        setEdit(name);
-      } else {
-        openPageView(pageRef);
+  const onSelect: MouseEventHandler<HTMLButtonElement> = useCallback(
+    (e) => {
+      if (
+        !pageRef.isRoot &&
+        e.target instanceof HTMLElement &&
+        e.target.closest(".lotion\\:folder\\:icon") == null
+      ) {
+        if (isSelected) {
+          setEdit(name);
+        } else {
+          openPageView(pageRef);
+        }
       }
-    }
-  }, [isSelected, name, openPageView, pageRef]);
-
-  const onMoreOptions: MouseEventHandler<HTMLButtonElement> = useCallback(
-    async (e) => {
-      e.stopPropagation();
-      const items = await Promise.all([
-        MenuItem.new({
-          text: "Rename...",
-          action: () => {
-            setEdit(name);
-          },
-        }),
-        MenuItem.new({
-          text: "Delete",
-          action: async () => {
-            if (
-              await confirm(
-                "This action cannot be reverted. The page and all of its children will be deleted.\nAre you sure?",
-                {
-                  title: `Delete "${name}"?`,
-                  type: "warning",
-                },
-              )
-            ) {
-              if (
-                view?.type === "page" &&
-                view.pageRef._path.includes(pageRef._path)
-              ) {
-                clearView();
-              }
-              pageRef.delete();
-            }
-          },
-        }),
-      ]);
-      const menu = await Menu.new({ items });
-      menu.popup();
     },
-    [clearView, name, pageRef, view?.pageRef, view?.type],
+    [isSelected, name, openPageView, pageRef],
   );
+
+  const onMoreOptions = useCallback(async () => {
+    const items = await Promise.all([
+      MenuItem.new({
+        text: "Rename...",
+        action: () => {
+          setEdit(name);
+        },
+      }),
+      MenuItem.new({
+        text: "Delete",
+        action: async () => {
+          if (
+            await confirm(
+              "This action cannot be reverted. The page and all of its children will be deleted.\nAre you sure?",
+              {
+                title: `Delete "${name}"?`,
+                type: "warning",
+              },
+            )
+          ) {
+            if (
+              view?.type === "page" &&
+              view.pageRef._path.includes(pageRef._path)
+            ) {
+              clearView();
+            }
+            pageRef.delete();
+          }
+        },
+      }),
+    ]);
+    const menu = await Menu.new({ items });
+    menu.popup();
+  }, [clearView, name, pageRef, view?.pageRef, view?.type]);
 
   const [newPageName, setNewPageName] = useState<null | string>(null);
-  const newPage: MouseEventHandler<HTMLButtonElement> = useCallback(
-    async (e) => {
-      e.stopPropagation();
-      setNewPageName("");
-    },
-    [],
-  );
+  const newPage = useCallback(() => {
+    setNewPageName("");
+  }, []);
 
   const cancelNewPage = useCallback(() => {
     setNewPageName(null);
   }, []);
 
-  const saveNewPage = useCallback(async () => {
+  const saveNewPage = useCallback(() => {
     if (newPageName != null && newPageName.trim() !== "") {
       const newPage = pageRef.createChild(newPageName.trim());
       setNewPageName(null);
@@ -149,6 +150,27 @@ export default function Folder({ pageRef }: Props): React.ReactNode {
 
   const children = usePageChildren(pageRef);
 
+  const { emojiPicker, closeEmojiPicker, toggleEmojiPicker } = useEmojiPicker();
+  const emojiRef = useRef<null | HTMLButtonElement>(null);
+  const onEmojiSelect = useCallback(
+    (newEmoji: string) => {
+      if (newEmoji !== emoji) {
+        pageRef.rename(newEmoji, name);
+      }
+      closeEmojiPicker();
+    },
+    [closeEmojiPicker, emoji, name, pageRef],
+  );
+  const onEmojiClick = useCallback(() => {
+    if (emojiRef.current != null) {
+      toggleEmojiPicker({
+        anchor: emojiRef.current,
+        autoFocus: true,
+        onEmojiSelect,
+      });
+    }
+  }, [onEmojiSelect, toggleEmojiPicker]);
+
   return (
     <div className={`lotion:folder ${pageRef.isRoot ? "root" : ""}`}>
       <header
@@ -158,9 +180,15 @@ export default function Folder({ pageRef }: Props): React.ReactNode {
         onClick={onSelect}
       >
         {!pageRef.isRoot && (
-          <span className="lotion:folder:icon">
-            <Page height="1em" width="1em" strokeWidth={1.5} />
-          </span>
+          <button
+            onClick={onEmojiClick}
+            ref={emojiRef}
+            className={`lotion:folder:icon lotion:folder:control:item lotion:folder:control:item:visible ${
+              emoji ? "emoji" : ""
+            }`}
+          >
+            {emoji ?? <Page height="1em" width="1em" strokeWidth={1.5} />}
+          </button>
         )}
         {edit != null ? (
           <input
@@ -212,6 +240,7 @@ export default function Folder({ pageRef }: Props): React.ReactNode {
           </div>
         )}
       </div>
+      {emojiPicker}
     </div>
   );
 }

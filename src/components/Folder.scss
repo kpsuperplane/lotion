@@ -72,11 +72,16 @@
     margin: 0;
     flex: 0;
     border: none;
-    font-size: 1.2em;
     padding: var(--gutter-small);
     background: none;
     display: flex;
     border-radius: 4px;
+    line-height: 1em;
+    font-size: 1.2em;
+    &.emoji {
+      font-size: 1em;
+      line-height: 1.2em;
+    }
   }
   &\:body {
     padding-inline-start: var(--gutter);
@@ -98,6 +103,9 @@
       }
       &:active {
         transform: scale(0.9);
+      }
+      &\:visible {
+        opacity: 1 !important;
       }
     }
     &:hover &\:item {

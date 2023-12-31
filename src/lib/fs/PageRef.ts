@@ -1,6 +1,7 @@
 import { Mutex } from "async-mutex";
+import initEmojiRegex from "emoji-regex";
 import { join } from "path";
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
 import * as fs from "tauri-plugin-fs";
 
 export interface IPageRefParent {
@@ -86,16 +87,21 @@ export default class PageRef extends EventTarget implements IPageRefParent {
       this.notifyNameChange();
     }
   }
-  rename = async (name: string) => {
+  rename = async (emoji: null | string, name: string) => {
+    const fullName = emoji == null ? name.trim() : `${emoji} ${name.trim()}`;
     if (await fs.exists(this._indexDocumentPath)) {
-      await fs.rename(this._indexDocumentPath, this.getDocumentPath(name), {});
+      await fs.rename(
+        this._indexDocumentPath,
+        this.getDocumentPath(fullName),
+        {},
+      );
     }
     await fs.rename(
       this._path,
-      join(this.parent.getPathForChildPage(), name),
+      join(this.parent.getPathForChildPage(), fullName),
       {},
     );
-    this._name = name;
+    this._name = fullName;
   };
   private notifyNameChange = () => {
     this.dispatchEvent(new Event("name:change"));
@@ -189,9 +195,25 @@ export default class PageRef extends EventTarget implements IPageRefParent {
   };
 }
 
-export function usePageName(ref: PageRef) {
+const emojiRegex = initEmojiRegex();
+export function usePageName(ref: PageRef): {
+  name: string;
+  emoji: null | string;
+  rawName: string;
+} {
   const getName = useCallback(() => ref._name, [ref]);
-  return useSyncExternalStore(ref.subscribeName, getName);
+  const rawName = useSyncExternalStore(ref.subscribeName, getName);
+  const { name, emoji } = useMemo(() => {
+    const matches = rawName.match(emojiRegex);
+    if (matches != null) {
+      const emoji = matches[0];
+      if (rawName.startsWith(emoji)) {
+        return { name: rawName.replace(emoji, "").trim(), emoji };
+      }
+    }
+    return { name: rawName, emoji: null };
+  }, [rawName]);
+  return { name, emoji, rawName };
 }
 
 export function usePagePath(ref: PageRef): string {

@@ -11,12 +11,16 @@
     "tauri": "tauri"
   },
   "dependencies": {
+    "@emoji-mart/data": "^1.1.2",
+    "@emoji-mart/react": "^1.1.1",
     "@lexical/react": "^0.12.5",
     "@tauri-apps/api": "^2.0.0-alpha.13",
     "@tauri-apps/plugin-dialog": "^2.0.0-alpha.5",
     "@tauri-apps/plugin-shell": "^2.0.0-alpha.3",
     "@types/mdast": "^4.0.3",
     "async-mutex": "^0.4.0",
+    "emoji-mart": "^5.5.2",
+    "emoji-regex": "^10.3.0",
     "iconoir-react": "^7.2.0",
     "katex": "^0.16.9",
     "lexical": "^0.12.5",
