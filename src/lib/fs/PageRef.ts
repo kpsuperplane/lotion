@@ -8,6 +8,8 @@ export interface IPageRefParent {
   getPathForChildPage(): string;
 }
 
+const SORT_PREFIX_REGEX = /^\d+\. /;
+
 export default class PageRef extends EventTarget implements IPageRefParent {
   public readonly isRoot;
 
@@ -27,7 +29,7 @@ export default class PageRef extends EventTarget implements IPageRefParent {
   private getTempChildMap = () => {
     const map = new Map<string, PageRef>();
     for (const child of this._children ?? []) {
-      map.set(child._name, child);
+      map.set(child._nameWithoutSortPrefix, child);
     }
     return map;
   };
@@ -35,25 +37,56 @@ export default class PageRef extends EventTarget implements IPageRefParent {
   protected createFolderIfNotExists = async () => {
     if (!(await fs.exists(this._path))) {
       await fs.mkdir(this._path);
+      if (this.parent instanceof PageRef) {
+        await this.parent.readAndMaybePatchChildren();
+      }
     }
   };
 
-  protected fetch = async () => {
-    const data = await this.fsMutex.runExclusive(async () => {
+  protected readAndMaybePatchChildren = async () =>
+    this.fsMutex.runExclusive(async () => {
       await this.createFolderIfNotExists();
-      return await fs.readDir(this._path);
+      const data = await fs.readDir(this._path);
+      const children = data
+        .filter((item) => item.isDirectory)
+        .sort((a, b) => {
+          const numA = Number(a.name.match(SORT_PREFIX_REGEX)?.[0]);
+          const numB = Number(b.name.match(SORT_PREFIX_REGEX)?.[0]);
+          if (!isNaN(numA) && !isNaN(numB)) {
+            return numA > numB ? 1 : -1;
+          } else if (isNaN(numA) && !isNaN(numB)) {
+            return -1;
+          } else if (!isNaN(numA) && isNaN(numB)) {
+            return 1;
+          } else {
+            return a.name > b.name ? 1 : -1;
+          }
+        });
+      const digits = Math.max(1, Math.floor(Math.log10(children.length)) + 1);
+      const childMap = this.getTempChildMap();
+      return await Promise.all(
+        children.map(async (childDir, idx) => {
+          const nameWithoutSortPrefix = childDir.name.replace(
+            SORT_PREFIX_REGEX,
+            "",
+          );
+          const start = `${(idx + 1).toString().padStart(digits, "0")}. `;
+          const expectedName = start + nameWithoutSortPrefix;
+
+          const child =
+            childMap.get(nameWithoutSortPrefix) ??
+            new PageRef(childDir.name, this);
+
+          if (child._name !== expectedName) {
+            await child.renameRaw(expectedName);
+          }
+          return child;
+        }),
+      );
     });
-    const childMap = this.getTempChildMap();
-    this._children = data
-      .filter((child) => child.isDirectory)
-      .map((child) => {
-        const existingChild = childMap.get(child.name);
-        if (existingChild != null) {
-          return existingChild;
-        } else {
-          return new PageRef(child.name, this);
-        }
-      });
+
+  protected fetch = async () => {
+    this._children = await this.readAndMaybePatchChildren();
     this.notifyChildrenChange();
   };
 
@@ -81,27 +114,31 @@ export default class PageRef extends EventTarget implements IPageRefParent {
   get _name() {
     return this.__name_DO_NOT_USE;
   }
+  get _nameWithoutSortPrefix() {
+    return this._name.replace(this._sortPrefix, "");
+  }
   private set _name(name: string) {
     if (this.__name_DO_NOT_USE !== name) {
       this.__name_DO_NOT_USE = name;
       this.notifyNameChange();
     }
   }
-  rename = async (emoji: null | string, name: string) => {
-    const fullName = emoji == null ? name.trim() : `${emoji} ${name.trim()}`;
+  protected renameRaw = async (name: string) => {
     if (await fs.exists(this._indexDocumentPath)) {
-      await fs.rename(
-        this._indexDocumentPath,
-        this.getDocumentPath(fullName),
-        {},
-      );
+      await fs.rename(this._indexDocumentPath, this.getDocumentPath(name), {});
     }
     await fs.rename(
       this._path,
-      join(this.parent.getPathForChildPage(), fullName),
+      join(this.parent.getPathForChildPage(), name),
       {},
     );
-    this._name = fullName;
+    this._name = name;
+  };
+  rename = async (emoji: null | string, name: string) => {
+    await this.renameRaw(
+      this._sortPrefix +
+        (emoji == null ? name.trim() : `${emoji} ${name.trim()}`),
+    );
   };
   private notifyNameChange = () => {
     this.dispatchEvent(new Event("name:change"));
@@ -127,12 +164,14 @@ export default class PageRef extends EventTarget implements IPageRefParent {
   };
   createChild = (name: string) => {
     for (const child of this._children ?? []) {
-      if (child._name === name) {
+      if (child._nameWithoutSortPrefix === name) {
         return child;
       }
     }
-    const newChild = new PageRef(name, this);
+    const sortPrefix = `${(this._children ?? []).length + 1}. `;
+    const newChild = new PageRef(sortPrefix + name, this);
     this._children = [...(this._children ?? []), newChild];
+    this.fetch();
     return newChild;
   };
 
@@ -146,6 +185,9 @@ export default class PageRef extends EventTarget implements IPageRefParent {
   }
   get _indexDocumentPath() {
     return this.getDocumentPath(this._name);
+  }
+  get _sortPrefix(): string {
+    return this._name.match(SORT_PREFIX_REGEX)?.[0] ?? "";
   }
   private loadContent = async () => {
     await this.createFolderIfNotExists();
@@ -191,6 +233,7 @@ export default class PageRef extends EventTarget implements IPageRefParent {
       this.parent._children = this.parent._children.filter(
         (child) => child != this,
       );
+      await this.parent.fetch();
     }
   };
 }
@@ -201,7 +244,7 @@ export function usePageName(ref: PageRef): {
   emoji: null | string;
   rawName: string;
 } {
-  const getName = useCallback(() => ref._name, [ref]);
+  const getName = useCallback(() => ref._nameWithoutSortPrefix, [ref]);
   const rawName = useSyncExternalStore(ref.subscribeName, getName);
   const { name, emoji } = useMemo(() => {
     const matches = rawName.match(emojiRegex);
