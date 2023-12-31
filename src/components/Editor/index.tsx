@@ -76,28 +76,32 @@ export default function Editor({ initialContent, id, onChange }: Props) {
   );
   const [rootRef, setRootRef] = useState<null | HTMLDivElement>(null);
   return (
-    <LexicalComposer initialConfig={initialConfig}>
-      <RichTextPlugin
-        contentEditable={
-          <div ref={setRootRef} className="lotion:editor">
+    <div className="lotion:editor" ref={setRootRef}>
+      <LexicalComposer initialConfig={initialConfig}>
+        <RichTextPlugin
+          contentEditable={
             <ContentEditable className="lotion:editor:content-editable" />
-          </div>
-        }
-        placeholder={<div>Enter some text...</div>}
-        ErrorBoundary={LexicalErrorBoundary}
-      />
-      <HistoryPlugin />
-      <EquationsPlugin />
-      <MyCustomAutoFocusPlugin />
-      <ListPlugin />
-      <TablePlugin />
-      {rootRef != null ? <DraggableBlockPlugin anchorElem={rootRef} /> : ""}
-      <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
-      <OnChangePlugin
-        ignoreHistoryMergeTagChange={true}
-        ignoreSelectionChange={true}
-        onChange={onChange}
-      />
-    </LexicalComposer>
+          }
+          placeholder={
+            <div className="lotion:editor:placeholder">
+              <p>Enter some text...</p>
+            </div>
+          }
+          ErrorBoundary={LexicalErrorBoundary}
+        />
+        <HistoryPlugin />
+        <EquationsPlugin />
+        <MyCustomAutoFocusPlugin />
+        <ListPlugin />
+        <TablePlugin />
+        {rootRef != null ? <DraggableBlockPlugin anchorElem={rootRef} /> : ""}
+        <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
+        <OnChangePlugin
+          ignoreHistoryMergeTagChange={true}
+          ignoreSelectionChange={true}
+          onChange={onChange}
+        />
+      </LexicalComposer>
+    </div>
   );
 }

@@ -3,20 +3,16 @@ import { confirm } from "@tauri-apps/plugin-dialog";
 
 import "./Folder.scss";
 import {
-  // useMemo,
-  // Suspense,
-  // useEffect,
   useState,
   useCallback,
   ChangeEvent,
   KeyboardEventHandler,
   MouseEventHandler,
-  useRef,
 } from "react";
 import { useViewContext } from "../lib/View";
 import { Menu, MenuItem } from "@tauri-apps/api/menu";
 import PageRef, { usePageChildren, usePageName } from "../lib/fs/PageRef";
-import useEmojiPicker from "./useEmojiPicker";
+import useEditPageEmoji from "../lib/useEditPageEmoji";
 
 interface Props {
   pageRef: PageRef;
@@ -150,26 +146,7 @@ export default function Folder({ pageRef }: Props): React.ReactNode {
 
   const children = usePageChildren(pageRef);
 
-  const { emojiPicker, closeEmojiPicker, toggleEmojiPicker } = useEmojiPicker();
-  const emojiRef = useRef<null | HTMLButtonElement>(null);
-  const onEmojiSelect = useCallback(
-    (newEmoji: string) => {
-      if (newEmoji !== emoji) {
-        pageRef.rename(newEmoji, name);
-      }
-      closeEmojiPicker();
-    },
-    [closeEmojiPicker, emoji, name, pageRef],
-  );
-  const onEmojiClick = useCallback(() => {
-    if (emojiRef.current != null) {
-      toggleEmojiPicker({
-        anchor: emojiRef.current,
-        autoFocus: true,
-        onEmojiSelect,
-      });
-    }
-  }, [onEmojiSelect, toggleEmojiPicker]);
+  const { emojiPicker, emojiRef, onEmojiClick } = useEditPageEmoji(pageRef);
 
   return (
     <div className={`lotion:folder ${pageRef.isRoot ? "root" : ""}`}>

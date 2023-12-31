@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { $convertToMarkdownString } from "@lexical/markdown";
 
 import { Page as PageEmoji } from "iconoir-react";
@@ -13,6 +13,7 @@ import PageRef, {
   usePageName,
   usePagePath,
 } from "../lib/fs/PageRef";
+import useEditPageEmoji from "../lib/useEditPageEmoji";
 
 type PageWrapperProps = {
   pageRef: PageRef;
@@ -24,22 +25,28 @@ function PageWrapper({
   children,
 }: React.PropsWithChildren<PageWrapperProps>) {
   const { name, emoji } = usePageName(pageRef);
+  const { emojiPicker, emojiRef, onEmojiClick } = useEditPageEmoji(pageRef);
   return (
     <div className="lotion:page">
       <Header title={`${name}${dirty ? "*" : ""}`}></Header>
       <div className="lotion:page:wrapper">
         <div className="lotion:page:top"></div>
         <div className="lotion:page:content">
-          <div className="lotion:page:top:emoji">
+          <button
+            className="lotion:page:top:emoji"
+            onClick={onEmojiClick}
+            ref={emojiRef}
+          >
             {emoji != null ? (
               <span>{emoji}</span>
             ) : (
               <PageEmoji height="1em" width="1em" />
             )}
-          </div>
+          </button>
           {children}
         </div>
       </div>
+      {emojiPicker}
     </div>
   );
 }
@@ -51,9 +58,11 @@ function Page({ pageRef }: Props) {
   const [dirty, setDirty] = useState(false);
 
   const saveDebounce = useRef<null | NodeJS.Timeout>(null);
+  const saveCommand = useRef<null | (() => void)>(null);
   const save = useCallback(
     (editorState: EditorState) => {
       editorState.read(() => {
+        saveCommand.current = null;
         const markdown = $convertToMarkdownString(TRANSFORMERS);
         pageRef.write(markdown).then(() => {
           setDirty(false);
@@ -65,17 +74,35 @@ function Page({ pageRef }: Props) {
 
   const onChange = useCallback(
     (editorState: EditorState) => {
-      if (editorState.toJSON()) setDirty(true);
+      setDirty(true);
       if (saveDebounce.current != null) {
         clearTimeout(saveDebounce.current);
       }
-      saveDebounce.current = setTimeout(() => save(editorState), 4000);
+      saveCommand.current = () => save(editorState);
+      saveDebounce.current = setTimeout(saveCommand.current, 3000);
     },
     [save],
   );
 
   const content = usePageContent(pageRef);
   const path = usePagePath(pageRef);
+
+  const onKeyDown = useCallback((e: KeyboardEvent) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+      e.preventDefault();
+      if (saveCommand.current != null) {
+        saveCommand.current();
+        if (saveDebounce.current != null) {
+          clearTimeout(saveDebounce.current);
+        }
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [onKeyDown]);
 
   return (
     <PageWrapper dirty={dirty} pageRef={pageRef}>

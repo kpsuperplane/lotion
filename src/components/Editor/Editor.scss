@@ -1,12 +1,11 @@
 .lotion\:editor {
   position: relative;
   margin-top: 0.5rem;
+  @import "./Typebase.scss";
   &\:content-editable {
     padding-inline: var(--editor-padding-inline);
     outline: 0px solid transparent;
     padding-bottom: 50px;
-    position: relative;
-    @import "./Typebase.scss";
   }
   h1:first-child {
     font-size: 2.5rem;
@@ -17,5 +16,17 @@
     float: left;
     height: 0;
     pointer-events: none;
+  }
+  &\:placeholder {
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    padding-inline: var(--editor-padding-inline);
+    opacity: 0.5;
+    p {
+      margin: 0;
+    }
   }
 }

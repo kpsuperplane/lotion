@@ -29,6 +29,14 @@
       display: flex;
       justify-content: center;
       align-items: center;
+      transform: translateZ(0);
+      transition: all 200ms;
+      &:hover {
+        background: #F5F5F5;
+      }
+      &:active {
+        transform: scale(0.95);
+      }
     }
   }
   &\:header {
