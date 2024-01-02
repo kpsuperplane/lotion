@@ -30,7 +30,8 @@
     "react-dom": "^18.2.0",
     "react-promise-suspense": "^0.3.4",
     "tauri-plugin-fs": "github:tauri-apps/tauri-plugin-fs#v2",
-    "tauri-plugin-store-api": "github:tauri-apps/tauri-plugin-store#v2"
+    "tauri-plugin-store-api": "github:tauri-apps/tauri-plugin-store#v2",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.0.0-alpha.20",
