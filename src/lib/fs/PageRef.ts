@@ -8,6 +8,13 @@ export interface IPageRefParent {
   getPathForChildPage(): string;
 }
 export default class PageRef extends EventTarget implements IPageRefParent {
+  static Event = Object.freeze({
+    CONTENT_CHANGE: "content:change",
+    NAME_CHANGE: "name:change",
+    CHILDREN_CHANGE: "children:change",
+    PATH_CHANGE: "path:change",
+  });
+
   public readonly isRoot;
 
   private __children_DO_NOT_USE: null | PageRef[] = null;
@@ -67,21 +74,21 @@ export default class PageRef extends EventTarget implements IPageRefParent {
     return join(this.parent.getPathForChildPage(), this._name);
   }
   subscribePath = (callback: () => void) => {
-    this.addEventListener("path:change", callback);
-    return () => this.removeEventListener("path:change", callback);
+    this.addEventListener(PageRef.Event.PATH_CHANGE, callback);
+    return () => this.removeEventListener(PageRef.Event.PATH_CHANGE, callback);
   };
   getPathForChildPage = () => {
     return this._path;
   };
   private notifyPathChange = () => {
-    this.dispatchEvent(new Event("path:change"));
+    this.dispatchEvent(new Event(PageRef.Event.PATH_CHANGE));
     this._children?.map((child) => child.notifyPathChange());
   };
 
   // Name
   subscribeName = (callback: () => void) => {
-    this.addEventListener("name:change", callback);
-    return () => this.removeEventListener("name:change", callback);
+    this.addEventListener(PageRef.Event.NAME_CHANGE, callback);
+    return () => this.removeEventListener(PageRef.Event.NAME_CHANGE, callback);
   };
   get _name() {
     return this.__name_DO_NOT_USE;
@@ -109,14 +116,15 @@ export default class PageRef extends EventTarget implements IPageRefParent {
     );
   };
   private notifyNameChange = () => {
-    this.dispatchEvent(new Event("name:change"));
+    this.dispatchEvent(new Event(PageRef.Event.NAME_CHANGE));
     this.notifyPathChange();
   };
 
   // Children
   subscribeChildren = (callback: () => void) => {
-    this.addEventListener("children:change", callback);
-    return () => this.removeEventListener("children:change", callback);
+    this.addEventListener(PageRef.Event.CHILDREN_CHANGE, callback);
+    return () =>
+      this.removeEventListener(PageRef.Event.CHILDREN_CHANGE, callback);
   };
   get _children(): typeof this.__children_DO_NOT_USE {
     return this.__children_DO_NOT_USE;
@@ -128,7 +136,7 @@ export default class PageRef extends EventTarget implements IPageRefParent {
     }
   }
   notifyChildrenChange = () => {
-    this.dispatchEvent(new Event("children:change"));
+    this.dispatchEvent(new Event(PageRef.Event.CHILDREN_CHANGE));
   };
   createChild = (name: string) => {
     for (const child of this._children ?? []) {
@@ -145,8 +153,9 @@ export default class PageRef extends EventTarget implements IPageRefParent {
 
   // Content
   subscribeContent = (callback: () => void) => {
-    this.addEventListener("content:change", callback);
-    return () => this.removeEventListener("content:change", callback);
+    this.addEventListener(PageRef.Event.CONTENT_CHANGE, callback);
+    return () =>
+      this.removeEventListener(PageRef.Event.CONTENT_CHANGE, callback);
   };
   private getDocumentPath(filename: string) {
     return join(this._path, `${filename}.md`);
@@ -187,7 +196,7 @@ export default class PageRef extends EventTarget implements IPageRefParent {
     });
 
   notifyContentChange = () => {
-    this.dispatchEvent(new Event("content:change"));
+    this.dispatchEvent(new Event(PageRef.Event.CONTENT_CHANGE));
   };
 
   delete = async () => {
