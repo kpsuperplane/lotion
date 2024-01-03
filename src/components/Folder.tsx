@@ -1,4 +1,11 @@
-import { Plus, PagePlus, MoreHoriz, Page } from "iconoir-react";
+import {
+  NavArrowDown,
+  NavArrowRight,
+  Plus,
+  PagePlus,
+  MoreHoriz,
+  Page,
+} from "iconoir-react";
 import { confirm } from "@tauri-apps/plugin-dialog";
 
 import "./Folder.scss";
@@ -19,7 +26,9 @@ interface Props {
 }
 export default function Folder({ pageRef }: Props): React.ReactNode {
   const { view, openPageView, clearView } = useViewContext();
-  const isSelected = view?.type === "page" && view.pageRef === pageRef;
+  const currentlyOpenPage =
+    view != null && view.type === "page" ? view.pageRef : null;
+  const isSelected = currentlyOpenPage === pageRef;
 
   const { name, emoji } = usePageName(pageRef);
 
@@ -88,10 +97,7 @@ export default function Folder({ pageRef }: Props): React.ReactNode {
               },
             )
           ) {
-            if (
-              view?.type === "page" &&
-              view.pageRef._path.includes(pageRef._path)
-            ) {
+            if (currentlyOpenPage?._path.includes(pageRef._path)) {
               clearView();
             }
             pageRef.delete();
@@ -101,7 +107,7 @@ export default function Folder({ pageRef }: Props): React.ReactNode {
     ]);
     const menu = await Menu.new({ items });
     menu.popup();
-  }, [clearView, name, pageRef, view?.pageRef, view?.type]);
+  }, [clearView, currentlyOpenPage?._path, name, pageRef]);
 
   const [newPageName, setNewPageName] = useState<null | string>(null);
   const newPage = useCallback(() => {
@@ -148,14 +154,39 @@ export default function Folder({ pageRef }: Props): React.ReactNode {
 
   const { emojiPicker, emojiRef, onEmojiClick } = useEditPageEmoji(pageRef);
 
+  const [expanded, setExpanded] = useState(true);
+  const toggleExpand = useCallback(() => {
+    setExpanded(!expanded);
+  }, [expanded]);
+
   return (
     <div className={`lotion:folder ${pageRef.isRoot ? "root" : ""}`}>
       <header
         className={`lotion:folder:header lotion:folder:control ${
           isSelected && newPageName == null ? "active" : ""
+        } ${
+          !pageRef.isRoot &&
+          !expanded &&
+          currentlyOpenPage !== pageRef &&
+          currentlyOpenPage?._path.startsWith(pageRef._path)
+            ? "contains-open-child"
+            : ""
         }`}
         onClick={onSelect}
       >
+        {!pageRef.isRoot && (
+          <button
+            disabled={!(children != null && children.length > 0)}
+            onClick={toggleExpand}
+            className="lotion:folder:icon lotion:folder:control:item lotion:folder:control:item:visible"
+          >
+            {expanded ? (
+              <NavArrowDown height="1em" width="1em" strokeWidth={1.5} />
+            ) : (
+              <NavArrowRight height="1em" width="1em" strokeWidth={1.5} />
+            )}
+          </button>
+        )}
         {!pageRef.isRoot && (
           <button
             onClick={onEmojiClick}
@@ -199,7 +230,10 @@ export default function Folder({ pageRef }: Props): React.ReactNode {
         </button>
       </header>
       <div className="lotion:folder:body">
-        {children?.map((child) => <Folder pageRef={child} key={child._name} />)}
+        {(expanded || pageRef.isRoot) &&
+          children?.map((child) => (
+            <Folder pageRef={child} key={child._name} />
+          ))}
         {newPageName != null && (
           <div className="lotion:folder:header lotion:folder:add-page active">
             <span className="lotion:folder:icon">

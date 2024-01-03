@@ -10,6 +10,9 @@
       > .lotion\:folder\:header\:name {
         color: rgba(0, 0, 0, 0.5);
       }
+      .lotion\:folder\:control\:item {
+        display: flex;
+      }
       &:hover {
         background: none;
       }
@@ -23,12 +26,15 @@
     display: flex;
     justify-content: flex-end;
     font-size: 0.9rem;
-    gap: var(--gutter-small);
     align-items: center;
     padding: var(--gutter-small);
     transition: all 200ms;
     box-sizing: content-box;
     border-radius: var(--radius);
+    &.contains-open-child:not(:hover) .lotion\:folder\:control\:item:first-child {
+      background-color: var(--background-color);
+      box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
+    }
     &\:name {
       user-select: none;
       pointer-events: none;
@@ -41,7 +47,7 @@
       flex: 1;
       min-width: 0;
       padding: 0;
-      margin: 0;
+      margin: 0 var(--gutter-small);
       width: 'auto';
       border-style: none;
       background: none;
@@ -97,19 +103,25 @@
       transition: all 200ms;
       opacity: 0;
       transform: translateZ(0) scale(1);
-      &:hover {
+      display: none;
+      &:not(:disabled):hover {
         background: var(--folder-control-bg__hover);
         opacity: 1 !important;
       }
       &:active {
         transform: scale(0.9);
       }
+      &:disabled {
+        opacity: 0.5;
+      }
       &\:visible {
         opacity: 1 !important;
+        display: flex;
       }
     }
     &:hover &\:item {
       opacity: 0.5;
+      display: flex;
     }
   }
 }
