@@ -7,10 +7,10 @@ import { ViewContextProvider } from "./lib/View";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <NotebooksProvider>
-      <ViewContextProvider>
-        <App />
-      </ViewContextProvider>
-    </NotebooksProvider>
-  </React.StrictMode>
+      <NotebooksProvider>
+        <ViewContextProvider>
+          <App />
+        </ViewContextProvider>
+      </NotebooksProvider>
+  </React.StrictMode>,
 );

@@ -160,7 +160,7 @@ export default function Folder({ pageRef }: Props): React.ReactNode {
   }, [expanded]);
 
   return (
-    <div className={`lotion:folder ${pageRef.isRoot ? "root" : ""}`}>
+    <div className={`lotion:folder ${pageRef}.isRoot ? "root" : ""}`}>
       <header
         className={`lotion:folder:header lotion:folder:control ${
           isSelected && newPageName == null ? "active" : ""
