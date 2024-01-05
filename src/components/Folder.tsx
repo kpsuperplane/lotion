@@ -21,7 +21,7 @@ import { useViewContext } from "../lib/View";
 import { Menu, MenuItem } from "@tauri-apps/api/menu";
 import PageRef, { usePageChildren, usePageName } from "../lib/fs/PageRef";
 import useEditPageEmoji from "../lib/useEditPageEmoji";
-import { useDraggable } from "@dnd-kit/core";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
 
 interface Props {
   pageRef: PageRef;
@@ -167,8 +167,16 @@ export default function Folder({ pageRef }: Props): React.ReactNode {
     }),
     [pageRef._path],
   );
-  const { isDragging, attributes, listeners, setNodeRef, transform } =
-    useDraggable(draggableProps);
+  const {
+    isDragging,
+    attributes,
+    listeners,
+    setNodeRef: setDraggableNodeRef,
+    transform,
+  } = useDraggable(draggableProps);
+
+  const { setNodeRef: setDroppableNodeRef, isOver } =
+    useDroppable(draggableProps);
 
   const style = transform
     ? {
@@ -178,13 +186,16 @@ export default function Folder({ pageRef }: Props): React.ReactNode {
 
   return (
     <div
-      ref={setNodeRef}
+      ref={setDroppableNodeRef}
       style={style}
       {...listeners}
       {...attributes}
-      className={`lotion:folder ${pageRef.isRoot ? "root" : ""}`}
+      className={`lotion:folder ${pageRef.isRoot ? "root" : ""} ${
+        isOver ? "drop" : ""
+      }`}
     >
       <header
+        ref={setDraggableNodeRef}
         className={`lotion:folder:header lotion:folder:control ${
           isSelected && newPageName == null ? "active" : ""
         } ${
