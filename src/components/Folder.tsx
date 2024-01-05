@@ -15,11 +15,13 @@ import {
   ChangeEvent,
   KeyboardEventHandler,
   MouseEventHandler,
+  useMemo,
 } from "react";
 import { useViewContext } from "../lib/View";
 import { Menu, MenuItem } from "@tauri-apps/api/menu";
 import PageRef, { usePageChildren, usePageName } from "../lib/fs/PageRef";
 import useEditPageEmoji from "../lib/useEditPageEmoji";
+import { useDraggable } from "@dnd-kit/core";
 
 interface Props {
   pageRef: PageRef;
@@ -159,8 +161,29 @@ export default function Folder({ pageRef }: Props): React.ReactNode {
     setExpanded(!expanded);
   }, [expanded]);
 
+  const draggableProps = useMemo(
+    () => ({
+      id: pageRef._path,
+    }),
+    [pageRef._path],
+  );
+  const { isDragging, attributes, listeners, setNodeRef, transform } =
+    useDraggable(draggableProps);
+
+  const style = transform
+    ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+      }
+    : undefined;
+
   return (
-    <div className={`lotion:folder ${pageRef}.isRoot ? "root" : ""}`}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      className={`lotion:folder ${pageRef.isRoot ? "root" : ""}`}
+    >
       <header
         className={`lotion:folder:header lotion:folder:control ${
           isSelected && newPageName == null ? "active" : ""
@@ -180,7 +203,7 @@ export default function Folder({ pageRef }: Props): React.ReactNode {
             onClick={toggleExpand}
             className="lotion:folder:icon lotion:folder:control:item lotion:folder:control:item:visible"
           >
-            {expanded ? (
+            {expanded && !isDragging ? (
               <NavArrowDown height="1em" width="1em" strokeWidth={1.5} />
             ) : (
               <NavArrowRight height="1em" width="1em" strokeWidth={1.5} />
@@ -229,7 +252,10 @@ export default function Folder({ pageRef }: Props): React.ReactNode {
           <Plus height="1em" width="1em" strokeWidth={3} />
         </button>
       </header>
-      <div className="lotion:folder:body">
+      <div
+        className="lotion:folder:body"
+        style={isDragging ? { opacity: 0 } : undefined}
+      >
         {(expanded || pageRef.isRoot) &&
           children?.map((child) => (
             <Folder pageRef={child} key={child._name} />
