@@ -92,6 +92,9 @@ export default class PageRef extends EventTarget implements IPageRefParent {
     if (this.__name_DO_NOT_USE !== name) {
       this.__name_DO_NOT_USE = name;
       this.notifyNameChange();
+      if (this.parent instanceof PageRef) {
+        this.parent.sortChildren();
+      }
     }
   }
   protected renameRaw = async (name: string) => {
@@ -125,12 +128,14 @@ export default class PageRef extends EventTarget implements IPageRefParent {
   }
   private set _children(children: PageRef[]) {
     if (this.__children_DO_NOT_USE !== children) {
-      this.__children_DO_NOT_USE = children.sort((a, b) =>
-        a._name > b._name ? 1 : -1,
-      );
+      this.__children_DO_NOT_USE = children;
+      this.sortChildren();
       this.notifyChildrenChange();
     }
   }
+  sortChildren = () => {
+    this._children?.sort((a, b) => (a._name > b._name ? 1 : -1));
+  };
   notifyChildrenChange = () => {
     this.dispatchEvent(new Event(PageRef.Event.CHILDREN_CHANGE));
   };
