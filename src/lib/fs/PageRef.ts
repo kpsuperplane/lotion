@@ -131,7 +131,7 @@ export default class PageRef extends EventTarget implements IPageRefParent {
   get nameWithoutEmoji() {
     const emoji = this.emoji;
     if (emoji != null) {
-      return this._name.replace(emoji, "");
+      return this._name.replace(emoji + " ", "");
     }
     return this._name;
   }
