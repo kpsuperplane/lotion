@@ -1,12 +1,19 @@
 import { Mutex } from "async-mutex";
 import initEmojiRegex from "emoji-regex";
 import { join } from "path";
-import { useCallback, useMemo, useSyncExternalStore } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 import * as fs from "tauri-plugin-fs";
 
 export interface IPageRefParent {
   getPathForChildPage(): string;
 }
+
+function sortChildren(children: PageRef[]) {
+  return [...children].sort((a, b) =>
+    a.nameWithoutEmoji > b.nameWithoutEmoji ? 1 : -1,
+  );
+}
+const emojiRegex = initEmojiRegex();
 export default class PageRef extends EventTarget implements IPageRefParent {
   static Event = Object.freeze({
     CONTENT_CHANGE: "content:change",
@@ -44,6 +51,20 @@ export default class PageRef extends EventTarget implements IPageRefParent {
       if (this.parent instanceof PageRef) {
         await this.parent.readChildren();
       }
+    }
+  };
+
+  moveTo = async (ref: PageRef) => {
+    if (
+      this.parent instanceof PageRef &&
+      ref._children != null &&
+      !ref._children?.includes(this)
+    ) {
+      this.parent._children = this.parent._children!.filter((c) => c != this);
+      ref._children = sortChildren([...ref._children, this]);
+      const oldPath = this._path;
+      this.parent = ref;
+      await fs.rename(oldPath, this._path, {});
     }
   };
 
@@ -93,9 +114,26 @@ export default class PageRef extends EventTarget implements IPageRefParent {
       this.__name_DO_NOT_USE = name;
       this.notifyNameChange();
       if (this.parent instanceof PageRef) {
-        this.parent.sortChildren();
+        this.parent._children = sortChildren(this.parent._children!);
       }
     }
+  }
+  get emoji() {
+    const matches = this._name.match(emojiRegex);
+    if (matches != null) {
+      const emoji = matches[0];
+      if (this._name.startsWith(emoji)) {
+        return emoji;
+      }
+    }
+    return null;
+  }
+  get nameWithoutEmoji() {
+    const emoji = this.emoji;
+    if (emoji != null) {
+      return this._name.replace(emoji, "");
+    }
+    return this._name;
   }
   protected renameRaw = async (name: string) => {
     if (await fs.exists(this._indexDocumentPath)) {
@@ -127,15 +165,9 @@ export default class PageRef extends EventTarget implements IPageRefParent {
     return this.__children_DO_NOT_USE;
   }
   private set _children(children: PageRef[]) {
-    if (this.__children_DO_NOT_USE !== children) {
-      this.__children_DO_NOT_USE = children;
-      this.sortChildren();
-      this.notifyChildrenChange();
-    }
+    this.__children_DO_NOT_USE = sortChildren(children);
+    this.notifyChildrenChange();
   }
-  sortChildren = () => {
-    this._children?.sort((a, b) => (a._name > b._name ? 1 : -1));
-  };
   notifyChildrenChange = () => {
     this.dispatchEvent(new Event(PageRef.Event.CHILDREN_CHANGE));
   };
@@ -212,25 +244,19 @@ export default class PageRef extends EventTarget implements IPageRefParent {
   };
 }
 
-const emojiRegex = initEmojiRegex();
 export function usePageName(ref: PageRef): {
   name: string;
   emoji: null | string;
   rawName: string;
 } {
-  const getName = useCallback(() => ref._name, [ref]);
-  const rawName = useSyncExternalStore(ref.subscribeName, getName);
-  const { name, emoji } = useMemo(() => {
-    const matches = rawName.match(emojiRegex);
-    if (matches != null) {
-      const emoji = matches[0];
-      if (rawName.startsWith(emoji)) {
-        return { name: rawName.replace(emoji, "").trim(), emoji };
-      }
-    }
-    return { name: rawName, emoji: null };
-  }, [rawName]);
-  return { name, emoji, rawName };
+  const getRawName = useCallback(() => ref._name, [ref]);
+  const getEmoji = useCallback(() => ref.emoji, [ref]);
+  const getName = useCallback(() => ref.nameWithoutEmoji, [ref]);
+  return {
+    name: useSyncExternalStore(ref.subscribeName, getName),
+    emoji: useSyncExternalStore(ref.subscribeName, getEmoji),
+    rawName: useSyncExternalStore(ref.subscribeName, getRawName),
+  };
 }
 
 export function usePagePath(ref: PageRef): string {

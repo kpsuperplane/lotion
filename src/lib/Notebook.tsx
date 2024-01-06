@@ -19,7 +19,7 @@ export default class Notebook implements IPageRefParent {
   private static instances: Map<string, Notebook> = new Map();
   public readonly page: PageRef;
   private readonly pagePath: string;
-  private constructor(
+  public constructor(
     public name: string,
     public path: string,
   ) {

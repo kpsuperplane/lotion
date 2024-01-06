@@ -1,4 +1,5 @@
 import {
+  Folder as FolderIcon,
   NavArrowDown,
   NavArrowRight,
   Plus,
@@ -163,9 +164,11 @@ export default function Folder({ pageRef }: Props): React.ReactNode {
 
   const draggableProps = useMemo(
     () => ({
+      data: pageRef,
+      disabled: pageRef.isRoot,
       id: pageRef._path,
     }),
-    [pageRef._path],
+    [pageRef],
   );
   const {
     isDragging,
@@ -177,10 +180,11 @@ export default function Folder({ pageRef }: Props): React.ReactNode {
 
   const droppableProps = useMemo(
     () => ({
+      data: pageRef,
       id: pageRef._path,
       disabled: isDragging,
     }),
-    [isDragging, pageRef._path],
+    [isDragging, pageRef],
   );
 
   const { setNodeRef: setDroppableNodeRef, isOver } =
@@ -192,18 +196,21 @@ export default function Folder({ pageRef }: Props): React.ReactNode {
       }
     : undefined;
 
+  const setRef = useCallback(
+    (ref: HTMLElement) => {
+      setDroppableNodeRef(ref);
+      setDraggableNodeRef(ref);
+    },
+    [setDraggableNodeRef, setDroppableNodeRef],
+  );
+
   return (
-    <div
-      ref={setDroppableNodeRef}
-      style={style}
-      {...listeners}
-      {...attributes}
-      className={`lotion:folder ${pageRef.isRoot ? "root" : ""} ${
-        isOver ? "drop" : ""
-      }`}
-    >
+    <div className={`lotion:folder ${pageRef.isRoot ? "root" : ""}`}>
       <header
-        ref={setDraggableNodeRef}
+        ref={setRef}
+        style={style}
+        {...listeners}
+        {...attributes}
         className={`lotion:folder:header lotion:folder:control ${
           isSelected && newPageName == null ? "active" : ""
         } ${
@@ -213,7 +220,7 @@ export default function Folder({ pageRef }: Props): React.ReactNode {
           currentlyOpenPage?._path.startsWith(pageRef._path)
             ? "contains-open-child"
             : ""
-        }`}
+        } ${isOver ? "drop" : ""} ${isDragging ? "dragging" : ""}`}
         onClick={onSelect}
       >
         {!pageRef.isRoot && (
@@ -239,6 +246,9 @@ export default function Folder({ pageRef }: Props): React.ReactNode {
           >
             {emoji ?? <Page height="1em" width="1em" strokeWidth={1.5} />}
           </button>
+        )}
+        {pageRef.isRoot && (
+          <FolderIcon height="1em" width="1em" strokeWidth={1.5} />
         )}
         {edit != null ? (
           <input

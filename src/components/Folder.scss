@@ -2,9 +2,6 @@
   display: flex;
   flex-direction: column;
   margin-top: var(--gutter);
-  &.drop {
-    background: rgba(255, 0, 0, 0.1);
-  }
   &.root {
     margin-top: 0;
     > .lotion\:folder\:header {
@@ -31,9 +28,22 @@
     font-size: 0.9rem;
     align-items: center;
     padding: var(--gutter-small);
-    transition: all 200ms;
+    transition: background-color 200ms, box-shadow 200ms;
     box-sizing: content-box;
     border-radius: var(--radius);
+    &.drop {
+      background: rgba(83, 212, 255, 0.359) !important;
+    }
+    &.dragging {
+      background: var(--background-color);
+      z-index: 2;
+      box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
+      // align-self: flex-start;
+      pointer-events: none;
+      button:not(.lotion:folder:control:item:visible) {
+        display: none;
+      }
+    }
     &.contains-open-child:not(:hover) .lotion\:folder\:control\:item:first-child {
       background-color: var(--background-color);
       box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;

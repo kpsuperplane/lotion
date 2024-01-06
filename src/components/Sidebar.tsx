@@ -4,7 +4,15 @@ import { Book } from "iconoir-react";
 
 import "./Sidebar.scss";
 import Folder from "./Folder";
-import { DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import {
+  DndContext,
+  DragEndEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { useCallback } from "react";
+import PageRef from "../lib/fs/PageRef";
 
 export default function Sidebar() {
   const notebook = useCurrentNotebook();
@@ -13,8 +21,16 @@ export default function Sidebar() {
       activationConstraint: {
         distance: 8,
       },
-    })
-  )
+    }),
+  );
+  const onDragEnd = useCallback(async (event: DragEndEvent) => {
+    if (
+      event.active.data.current instanceof PageRef &&
+      event.over?.data.current instanceof PageRef
+    ) {
+      await event.active.data.current.moveTo(event.over.data.current);
+    }
+  }, []);
   return (
     <div className="lotion:sidebar">
       <Header className="lotion:sidebar:header" />
@@ -22,7 +38,7 @@ export default function Sidebar() {
         <Book />
         <span>{notebook.name}</span>
       </button>
-      <DndContext sensors={sensors}>
+      <DndContext sensors={sensors} onDragEnd={onDragEnd}>
         <Folder pageRef={notebook.page} />
       </DndContext>
     </div>
