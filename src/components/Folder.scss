@@ -28,7 +28,6 @@
     font-size: 0.9rem;
     align-items: center;
     padding: var(--gutter-small);
-    transition: background-color 200ms, box-shadow 200ms;
     box-sizing: content-box;
     border-radius: var(--radius);
     &.drop {
@@ -38,7 +37,6 @@
       background: var(--background-color);
       z-index: 2;
       box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
-      // align-self: flex-start;
       pointer-events: none;
       button:not(.lotion:folder:control:item:visible) {
         display: none;
