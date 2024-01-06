@@ -3,7 +3,6 @@ import initEmojiRegex from "emoji-regex";
 import { join } from "path";
 import { useCallback, useMemo, useSyncExternalStore } from "react";
 import * as fs from "tauri-plugin-fs";
-import PageConfig from "./PageConfig";
 
 export interface IPageRefParent {
   getPathForChildPage(): string;
@@ -21,7 +20,6 @@ export default class PageRef extends EventTarget implements IPageRefParent {
   private __children_DO_NOT_USE: null | PageRef[] = null;
   private __content_DO_NOT_USE: null | string = null;
   private fsMutex = new Mutex();
-  private config: PageConfig;
 
   public constructor(
     private __name_DO_NOT_USE: string,
@@ -29,7 +27,6 @@ export default class PageRef extends EventTarget implements IPageRefParent {
   ) {
     super();
     this.isRoot = !(this.parent instanceof PageRef);
-    this.config = new PageConfig(this);
     this.fetch();
   }
 
@@ -45,16 +42,16 @@ export default class PageRef extends EventTarget implements IPageRefParent {
     if (!(await fs.exists(this._path))) {
       await fs.mkdir(this._path);
       if (this.parent instanceof PageRef) {
-        await this.parent.readAndMaybePatchChildren();
+        await this.parent.readChildren();
       }
     }
   };
 
-  protected readAndMaybePatchChildren = async () =>
+  protected readChildren = async () =>
     this.fsMutex.runExclusive(async () => {
       await this.createFolderIfNotExists();
       const data = await fs.readDir(this._path);
-      const children = await this.config.sortEntries(data);
+      const children = data.filter((item) => item.isDirectory);
       const childMap = this.getTempChildMap();
       return await Promise.all(
         children.map(
@@ -64,7 +61,7 @@ export default class PageRef extends EventTarget implements IPageRefParent {
     });
 
   protected fetch = async () => {
-    this._children = await this.readAndMaybePatchChildren();
+    this._children = await this.readChildren();
   };
 
   // Path
@@ -107,9 +104,6 @@ export default class PageRef extends EventTarget implements IPageRefParent {
       {},
     );
     this._name = name;
-    if (this.parent instanceof PageRef) {
-      this.parent.persistChildrenConfig();
-    }
   };
   rename = async (emoji: null | string, name: string) => {
     await this.renameRaw(
@@ -121,12 +115,6 @@ export default class PageRef extends EventTarget implements IPageRefParent {
     this.notifyPathChange();
   };
 
-  // Children
-  persistChildrenConfig = async () => {
-    await this.config.maybePersistNames(
-      (this._children ?? []).map((child) => child._name),
-    );
-  };
   subscribeChildren = (callback: () => void) => {
     this.addEventListener(PageRef.Event.CHILDREN_CHANGE, callback);
     return () =>
@@ -137,8 +125,9 @@ export default class PageRef extends EventTarget implements IPageRefParent {
   }
   private set _children(children: PageRef[]) {
     if (this.__children_DO_NOT_USE !== children) {
-      this.__children_DO_NOT_USE = children;
-      this.persistChildrenConfig();
+      this.__children_DO_NOT_USE = children.sort((a, b) =>
+        a._name > b._name ? 1 : -1,
+      );
       this.notifyChildrenChange();
     }
   }

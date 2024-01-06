@@ -175,8 +175,16 @@ export default function Folder({ pageRef }: Props): React.ReactNode {
     transform,
   } = useDraggable(draggableProps);
 
+  const droppableProps = useMemo(
+    () => ({
+      id: pageRef._path,
+      disabled: isDragging,
+    }),
+    [isDragging, pageRef._path],
+  );
+
   const { setNodeRef: setDroppableNodeRef, isOver } =
-    useDroppable(draggableProps);
+    useDroppable(droppableProps);
 
   const style = transform
     ? {
@@ -268,9 +276,9 @@ export default function Folder({ pageRef }: Props): React.ReactNode {
         style={isDragging ? { opacity: 0 } : undefined}
       >
         {(expanded || pageRef.isRoot) &&
-          children?.map((child) => (
-            <Folder pageRef={child} key={child._name} />
-          ))}
+          children?.map((child) => {
+            return <Folder pageRef={child} key={child._name} />;
+          })}
         {newPageName != null && (
           <div className="lotion:folder:header lotion:folder:add-page active">
             <span className="lotion:folder:icon">
